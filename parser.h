@@ -17,7 +17,7 @@ public:
     Program* parseProgram();
     FunDec* parseFunDec();
     Body* parseBody();
-    VarDec* parseVarDec();
+    GlobalVar* parseGlobalVar();
     Stm* parseStm();
     Exp* parseCE();
     Exp* parseBE();

@@ -1,41 +1,40 @@
 # rust-compiler
 
-## Gramática del Lenguaje (EBNF)
+## Gramática del Lenguaje (mini-Rust, EBNF)
 
 ```ebnf
-Program        ::= [ VarDec { ";" VarDec } ]
-                   [ FunDec { FunDec } ]
-                   EOF ;
+Program        ::= { Item } EOF ;
 
-VarDec         ::= "var" Type IdList ;
-Type           ::= Identifier ;
-IdList         ::= Identifier { "," Identifier } ;
+Item           ::= GlobalVar
+                 | FunDec ;
 
-FunDec         ::= "fun" Type Identifier "(" [ ParamList ] ")"
-                   Body
-                   "endfun" ;
+GlobalVar      ::= "static" [ "mut" ] Identifier ":" Type "=" CE ";" ;
+
+FunDec         ::= "fn" Identifier "(" [ ParamList ] ")"
+                   [ "->" Type ]
+                   Block ;
 
 ParamList      ::= Param { "," Param } ;
-Param          ::= Type Identifier ;
+Param          ::= Identifier ":" Type ;
 
-Body           ::= [ VarDec { ";" VarDec } ]
-                   Stm { ";" Stm } ;
+Block          ::= "{" { Stm } "}" ;
 
-Stm            ::= AssignStm
+Stm            ::= LetStm
+                 | AssignStm
                  | PrintStm
                  | ReturnStm
                  | IfStm
                  | WhileStm ;
 
-AssignStm      ::= Identifier "=" CE ;
-PrintStm       ::= "print" "(" CE ")" ;
-ReturnStm      ::= "return" "(" CE ")" ;
+LetStm         ::= "let" [ "mut" ] Identifier [ ":" Type ] [ "=" CE ] ";" ;
+AssignStm      ::= Identifier "=" CE ";" ;
+PrintStm       ::= "print" "(" CE ")" ";" ;
+ReturnStm      ::= "return" [ CE ] ";" ;
 
-IfStm          ::= "if" CE "then" Body
-                   [ "else" Body ]
-                   "endif" ;
+IfStm          ::= "if" CE Block
+                   [ "else" Block ] ;
 
-WhileStm       ::= "while" CE "do" Body "endwhile" ;
+WhileStm       ::= "while" CE Block ;
 
 CE             ::= BE [ "<=" BE ] ;
 BE             ::= E { ("+" | "-") E } ;
@@ -47,7 +46,9 @@ F              ::= Number
                  | "false"
                  | "(" CE ")"
                  | Identifier
-                 | Identifier "(" CE { "," CE } ")" ;
+                 | Identifier "(" [ CE { "," CE } ] ")" ;
+
+Type           ::= Identifier ;
 
 Identifier     ::= Letter { Letter | Digit | "_" } ;
 Number         ::= Digit { Digit } ;

@@ -21,26 +21,23 @@ string Exp::binopToChar(BinaryOp op) {
 // ------------------ BinaryExp ------------------
 BinaryExp::BinaryExp(Exp* l, Exp* r, BinaryOp o)
     : left(l), right(r), op(o) {}
-
-    
+  
 BinaryExp::~BinaryExp() {
     delete left;
     delete right;
 }
-
-
 
 // ------------------ NumberExp ------------------
 NumberExp::NumberExp(int v) : value(v) {}
 
 NumberExp::~NumberExp() {}
 
-
 // ------------------idExp ------------------
 IdExp::IdExp(string v) : value(v) {}
 
 IdExp::~IdExp() {}
 
+// ------------------ Stm -------------------
 
 Stm::~Stm(){}
 
@@ -52,7 +49,6 @@ IfStm::IfStm(Exp* c, Body* t, Body* e): condition(c), then(t), els(e) {}
 
 WhileStm::WhileStm(Exp* c, Body* t): condition(c), b(t) {}
 
-
 PrintStm::PrintStm(Exp* expresion){
     e=expresion;
 }
@@ -62,7 +58,7 @@ AssignStm::AssignStm(string variable,Exp* expresion){
     e = expresion;
 }
 
-
+// -------------------- var -----------------
 
 VarDec::VarDec() {}
 

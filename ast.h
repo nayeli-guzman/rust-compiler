@@ -74,18 +74,27 @@ public:
     ~VarDec();
 };
 
+class GlobalVar{
+public:
+    Exp* val;
+    string type;
+    string var; // id
+    bool mut; // is mut o no?
+    GlobalVar();
+    int accept(Visitor* visitor);
+    ~GlobalVar();
+};
+
 
 class Body{
 public:
     list<Stm*> StmList;
-    list<VarDec*> declarations;
     int accept(Visitor* visitor);
     Body();
     ~Body();
 };
 
-
-
+// ------------------ Stm -------------------
 
 class IfStm: public Stm {
 public:
@@ -106,8 +115,6 @@ public:
     ~WhileStm(){};
 };
 
-
-
 class AssignStm: public Stm {
 public:
     string id;
@@ -124,11 +131,6 @@ public:
     ~PrintStm();
     int accept(Visitor* visitor);
 };
-
-
-
-
-
 
 class ReturnStm: public Stm {
 public:
@@ -147,7 +149,16 @@ public:
     ~FcallExp(){};
 };
 
-
+class LetStm: public Stm {
+public:
+    string id;
+    string type;
+    bool mut;
+    Exp* e;
+    LetStm(string, string, Exp*, bool);
+    ~LetStm();
+    int accept(Visitor* visitor);
+};
 
 
 class FunDec{
@@ -164,7 +175,7 @@ public:
 
 class Program{
 public:
-    list<VarDec*> vdlist;
+    list<GlobalVar*> vdlist;
     list<FunDec*> fdlist;
     Program(){};
     ~Program(){};

@@ -39,7 +39,14 @@ public:
         VAR,
         COMA,
         TRUE,
-        FALSE
+        FALSE,
+        STATIC,
+        MUT,
+        LET,
+        COLON, // :
+        ARROW, // ->
+        LBRACK, // {
+        RBRACK  // }
     };
 
     // Atributos
