@@ -1,5 +1,24 @@
 {
     "files.associations": {
-        "vector": "cpp"
+        "vector": "cpp",
+        "unordered_map": "cpp",
+        "iostream": "cpp",
+        "__bit_reference": "cpp",
+        "__node_handle": "cpp",
+        "bitset": "cpp",
+        "deque": "cpp",
+        "limits": "cpp",
+        "optional": "cpp",
+        "ratio": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "iterator": "cpp",
+        "stdexcept": "cpp",
+        "__hash_table": "cpp",
+        "array": "cpp",
+        "complex": "cpp",
+        "type_traits": "cpp",
+        "variant": "cpp"
     }
 }

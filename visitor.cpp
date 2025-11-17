@@ -32,6 +32,10 @@ int AssignStm::accept(Visitor* visitor) {
     return visitor->visit(this);
 }
 
+int LetStm::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
+
 int IfStm::accept(Visitor* visitor) {
     return visitor->visit(this);
 }
@@ -45,6 +49,10 @@ int Body::accept(Visitor* visitor){
 }
 
 int VarDec::accept(Visitor* visitor){
+    return visitor->visit(this);
+}
+
+int GlobalVar::accept(Visitor* visitor){
     return visitor->visit(this);
 }
 
@@ -108,6 +116,11 @@ int GenCodeVisitor::visit(NumberExp* exp) {
     return 0;
 }
 
+int GenCodeVisitor::visit(GlobalVar* exp) {
+    return 0;
+}
+
+
 int GenCodeVisitor::visit(IdExp* exp) {
     if (memoriaGlobal.count(exp->value))
         out << " movq " << exp->value << "(%rip), %rax"<<endl;
@@ -126,6 +139,8 @@ int GenCodeVisitor::visit(BinaryExp* exp) {
         case PLUS_OP:  out << " addq %rcx, %rax\n"; break;
         case MINUS_OP: out << " subq %rcx, %rax\n"; break;
         case MUL_OP:   out << " imulq %rcx, %rax\n"; break;
+        case DIV_OP:   out << " imulq %rcx, %rax\n"; break;
+        case POW_OP:   out << " imulq %rcx, %rax\n"; break;
         case LE_OP:
             out << " cmpq %rcx, %rax\n"
                       << " movl $0, %eax\n"
@@ -156,12 +171,8 @@ int GenCodeVisitor::visit(PrintStm* stm) {
             return 0;
 }
 
-
-
 int GenCodeVisitor::visit(Body* b) {
-    for (auto dec : b->declarations){
-        dec->accept(this);
-    }
+
     for (auto s : b->StmList){
         s->accept(this);
     }
@@ -193,10 +204,13 @@ int GenCodeVisitor::visit(WhileStm* stm) {
     return 0;
 }
 
-
 int GenCodeVisitor::visit(ReturnStm* stm) {
     stm->e->accept(this);
     out << " jmp .end_"<<nombreFuncion << endl;
+    return 0;
+}
+
+int GenCodeVisitor::visit(LetStm* stm) {
     return 0;
 }
 
@@ -216,9 +230,9 @@ int GenCodeVisitor::visit(FunDec* f) {
         out << " movq " << argRegs[i] << "," << offset << "(%rbp)" << endl;
         offset -= 8;
     }
-    for (auto i: f->cuerpo->declarations){
-        i->accept(this);
-    }
+    // for (auto i: f->cuerpo->declarations){
+    //     i->accept(this);
+    // }
     int reserva = -offset - 8;
     out << " subq $" << reserva << ", %rsp" << endl;
     for (auto i: f->cuerpo->StmList){
@@ -241,3 +255,136 @@ int GenCodeVisitor::visit(FcallExp* exp) {
     out << "call " << exp->nombre << endl;
     return 0;
 }
+
+
+
+
+
+// PRINT VISITOR
+
+
+int PrintVisitor::visit(BinaryExp* exp) {
+    exp->left->accept(this);
+    cout << ' ' << Exp::binopToChar(exp->op) << ' ';
+    exp->right->accept(this);
+    return 0;
+}
+
+int PrintVisitor::visit(NumberExp* exp) {
+    cout << exp->value;
+    return 0;
+}
+
+void PrintVisitor::imprimir(Program* programa){
+    if (programa)
+    {
+        cout << "Codigo:" << endl; 
+        programa->accept(this);
+        cout << endl;
+    }
+    return ;
+}
+
+int PrintVisitor::visit(Program* p) {
+    for(auto e:p->fdlist) {
+        e->accept(this);
+    }
+    for(auto e:p->vdlist) {
+        e->accept(this);
+    }
+    // p->body->accept(this);
+    return 0;
+}
+
+int PrintVisitor::visit(Body* p) {
+    for(auto e:p->StmList) {
+        e->accept(this);
+    }
+    // for(auto i: p->vlist){
+    //     i->accept(this);
+    // }
+
+    // for(auto i: p->slist){
+    //     i->accept(this);
+    // }
+    return 0;
+}
+
+int PrintVisitor::visit(PrintStm* stm) {
+    cout << "print(";
+    stm->e->accept(this);
+    cout << ")" << endl;
+    return 0;
+}
+
+int PrintVisitor::visit(AssignStm* stm) {
+    cout << stm->id << "=";
+    stm->e->accept(this);
+    cout << endl;
+    return 0;
+}
+
+int PrintVisitor::visit(LetStm* stm) {
+    cout << endl;
+    return 0;
+}
+
+int PrintVisitor::visit(VarDec* stm) {
+    // cout << "var " << stm->type << " ";
+    // for (auto i:stm->variables) {
+    //     cout << i << ", ";
+    // } cout << endl;
+    return 0;
+}
+
+int PrintVisitor::visit(GlobalVar* stm) {
+    // cout << "var " << stm->type << " ";
+    // for (auto i:stm->variables) {
+    //     cout << i << ", ";
+    // } cout << endl;
+    return 0;
+}
+
+int PrintVisitor::visit(IdExp* p) {
+    cout << p->value;
+    return 0;
+}
+
+int PrintVisitor::visit(FunDec* p) {
+    return 0;
+}
+
+int PrintVisitor::visit(FcallExp* p) {
+    return 0;
+}
+
+int PrintVisitor::visit(ReturnStm* p) {
+    return 0;
+}
+
+
+int PrintVisitor::visit(IfStm* stm) {
+    cout << "if " ;
+    stm->condition->accept(this);
+    cout  << " then" << endl;
+    stm->then->accept(this);
+    if (stm->els){
+        cout << "else"  << endl;;
+        stm->els->accept(this);
+    }   
+    cout << "endif" << endl;
+    return 0;
+}
+
+int PrintVisitor::visit(WhileStm* stm) {
+    cout << "while " ;
+    stm->condition->accept(this);
+    cout  << " do" << endl;
+    stm->b->accept(this);
+    // for (auto i:stm->slist1){
+    //     i->accept(this);
+    // }
+    cout << "endwhile" << endl;
+    return 0;
+}
+

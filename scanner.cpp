@@ -48,13 +48,16 @@ Token* Scanner::nextToken() {
         token = new Token(Token::NUM, input, first, current - first);
     }
     // ID
-    else if (isalpha(c)) {
+    else if (isalpha(c) ) {
         current++;
-        while (current < input.length() && isalnum(input[current]))
+        while (current < input.length() && (isalnum(input[current]) || input[current]=='!'))
             current++;
         string lexema = input.substr(first, current - first);
         if (lexema=="sqrt") return new Token(Token::SQRT, input, first, current - first);
-        else if (lexema=="print") return new Token(Token::PRINT, input, first, current - first);
+        else if (lexema=="println!") {
+            // string temp = "!()" FALTA PRINT
+            return new Token(Token::PRINT, input, first, current - first);
+        }
         else if (lexema=="if") return new Token(Token::IF, input, first, current - first);
         else if (lexema=="while") return new Token(Token::WHILE, input, first, current - first);
         else if (lexema=="then") return new Token(Token::THEN, input, first, current - first);
@@ -66,18 +69,31 @@ Token* Scanner::nextToken() {
         else if (lexema=="true") return new Token(Token::TRUE, input, first, current - first);
         else if (lexema=="false") return new Token(Token::FALSE, input, first, current - first);
 
-        else if (lexema=="fun") return new Token(Token::FUN, input, first, current - first);
+        else if (lexema=="fn") return new Token(Token::FUN, input, first, current - first);
         else if (lexema=="endfun") return new Token(Token::ENDFUN, input, first, current - first);
         else if (lexema=="return") return new Token(Token::RETURN, input, first, current - first);
+
+        else if (lexema=="static") return new Token(Token::STATIC, input, first, current - first);
+        else if (lexema=="mut") return new Token(Token::MUT, input, first, current - first);
+        else if (lexema=="let") return new Token(Token::LET, input, first, current - first);
 
         else return new Token(Token::ID, input, first, current - first);
     }
     // Operadores
-    else if (strchr("+/-*();=<,", c)) {
+    else if (strchr("+/-*();=<:,{}\"", c)) {
         switch (c) {
             case '<': token = new Token(Token::LE,  c); break;
             case '+': token = new Token(Token::PLUS,  c); break;
-            case '-': token = new Token(Token::MINUS, c); break;
+            case '-': 
+            if (input[current+1]=='>')
+            {
+                current++;
+                token = new Token(Token::ARROW, input, first, current + 1 - first);
+            }
+            else{
+                token = new Token(Token::MINUS,   c);
+            } 
+            break;
             case '*': 
             if (input[current+1]=='*')
             {
@@ -88,12 +104,22 @@ Token* Scanner::nextToken() {
                 token = new Token(Token::MUL,   c);
             }
             break;
+            case '"':
+            if (input.substr(current+1, 3) == "{}\"") {
+                current = current + 3;
+                token = new Token(Token::PRINT_NUM, input, first, current + 1 - first);
+
+            } else {}
+            break;
             case '/': token = new Token(Token::DIV,   c); break;
             case '(': token = new Token(Token::LPAREN,c); break;
             case ')': token = new Token(Token::RPAREN,c); break;
             case '=': token = new Token(Token::ASSIGN,c); break;
             case ';': token = new Token(Token::SEMICOL,c); break;
+            case ':': token = new Token(Token::COLON,c); break;
             case ',': token = new Token(Token::COMA,c); break;
+            case '{': token = new Token(Token::LBRACK,c); break;
+            case '}': token = new Token(Token::RBRACK,c); break;
 
         }
         current++;

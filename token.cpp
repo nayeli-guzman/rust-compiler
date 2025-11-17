@@ -55,6 +55,13 @@ ostream& operator<<(ostream& outs, const Token& tok) {
         case Token::STATIC:    outs << "TOKEN(STATIC, \""    << tok.text << "\")"; break;
         case Token::MUT:    outs << "TOKEN(MUT, \""    << tok.text << "\")"; break;
         case Token::LET:    outs << "TOKEN(LET, \""    << tok.text << "\")"; break;
+        case Token::COLON:    outs << "TOKEN(COLON, \""    << tok.text << "\")"; break;
+        case Token::ARROW:    outs << "TOKEN(ARROW, \""    << tok.text << "\")"; break;
+        case Token::LBRACK:    outs << "TOKEN(LBRACK, \""    << tok.text << "\")"; break;
+        case Token::RBRACK:    outs << "TOKEN(RBRACK, \""    << tok.text << "\")"; break;
+        case Token::TRUE:    outs << "TOKEN(TRUE, \""    << tok.text << "\")"; break;
+        case Token::FALSE:    outs << "TOKEN(FALSE, \""    << tok.text << "\")"; break;
+        case Token::PRINT_NUM:    outs << "TOKEN(PRINT_NUM, \""    << tok.text << "\")"; break;
 
         case Token::END:    outs << "TOKEN(END)"; break;
     }

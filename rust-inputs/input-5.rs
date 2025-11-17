@@ -1,0 +1,8 @@
+fn id(x: i32) -> i32 {
+    return x;
+}
+
+fn main() -> i32 {
+    println!("{}", id(42));
+    return 0;
+}

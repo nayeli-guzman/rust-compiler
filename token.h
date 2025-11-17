@@ -46,7 +46,8 @@ public:
         COLON, // :
         ARROW, // ->
         LBRACK, // {
-        RBRACK  // }
+        RBRACK,  // }
+        PRINT_NUM // "{}"
     };
 
     // Atributos
@@ -61,6 +62,8 @@ public:
     // Sobrecarga de operadores de salida
     friend ostream& operator<<(ostream& outs, const Token& tok);
     friend ostream& operator<<(ostream& outs, const Token* tok);
-};
+    bool operator==(const Token& other) const {
+        return type == other.type;
+    }};
 
 #endif // TOKEN_H

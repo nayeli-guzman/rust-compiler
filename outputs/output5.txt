@@ -1,0 +1,44 @@
+=== STDOUT ===
+NO
+NO
+TOKEN(FUN, "fn")
+TOKEN(ID, "id")
+TOKEN(LPAREN, "(")
+TOKEN(ID, "x")
+TOKEN(COLON, ":")
+TOKEN(ID, "i32")
+TOKEN(RPAREN, ")")
+TOKEN(ARROW, "->")
+TOKEN(ID, "i32")
+TOKEN(LBRACK, "{")
+TOKEN(RETURN, "return")
+TOKEN(ID, "x")
+TOKEN(SEMICOL, ";")
+TOKEN(RBRACK, "}")
+TOKEN(FUN, "fn")
+TOKEN(ID, "main")
+TOKEN(LPAREN, "(")
+TOKEN(RPAREN, ")")
+TOKEN(ARROW, "->")
+TOKEN(ID, "i32")
+TOKEN(LBRACK, "{")
+TOKEN(PRINT, "println!")
+TOKEN(LPAREN, "(")
+TOKEN(PRINT_NUM, ""{}"")
+TOKEN(COMA, ",")
+TOKEN(ID, "id")
+TOKEN(LPAREN, "(")
+TOKEN(NUM, "42")
+TOKEN(RPAREN, ")")
+TOKEN(RPAREN, ")")
+TOKEN(SEMICOL, ";")
+TOKEN(RETURN, "return")
+TOKEN(NUM, "0")
+TOKEN(SEMICOL, ";")
+TOKEN(RBRACK, "}")
+Parser exitoso
+Codigo:
+
+Generando codigo ensamblador en rust-inputs/input-5.s
+
+=== STDERR ===

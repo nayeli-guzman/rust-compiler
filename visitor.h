@@ -10,10 +10,13 @@ using namespace std;
 class BinaryExp;
 class NumberExp;
 class Program;
+
 class PrintStm;
 class WhileStm;
 class IfStm;
 class AssignStm;
+class LetStm;
+
 class Body;
 class Vardec;
 class FcallExp;
@@ -32,8 +35,10 @@ public:
     virtual int visit(WhileStm* stm) = 0;
     virtual int visit(IfStm* stm) = 0;
     virtual int visit(AssignStm* stm) = 0;
+    virtual int visit(LetStm* stm) = 0;
     virtual int visit(Body* body) = 0;
     virtual int visit(VarDec* vd) = 0;
+    virtual int visit(GlobalVar* ) = 0;
     virtual int visit(FcallExp* fcall) = 0;
     virtual int visit(ReturnStm* r) = 0;
     virtual int visit(FunDec* fd) = 0;
@@ -60,11 +65,36 @@ public:
     int visit(AssignStm* stm) override;
     int visit(WhileStm* stm) override;
     int visit(IfStm* stm) override;
+    int visit(LetStm* stm) override;
     int visit(Body* body) override;
     int visit(VarDec* vd) override;
+    int visit(GlobalVar* ) override;
     int visit(FcallExp* fcall) override;
     int visit(ReturnStm* r) override;
     int visit(FunDec* fd) override;
 };
+
+
+class PrintVisitor : public Visitor {
+public:
+
+    int visit(BinaryExp* exp) override;
+    int visit(NumberExp* exp) override;
+    int visit(IdExp* exp) override;
+    int visit(Program* p) override ;
+    int visit(PrintStm* stm) override;
+    int visit(AssignStm* stm) override;
+    int visit(WhileStm* stm) override;
+    int visit(IfStm* stm) override;
+    int visit(LetStm* stm) override;
+    int visit(Body* body) override;
+    int visit(VarDec* vd) override;
+    int visit(GlobalVar* ) override;
+    int visit(FcallExp* fcall) override;
+    int visit(ReturnStm* r) override;
+    int visit(FunDec* fd) override;
+    void imprimir(Program* program); 
+};
+
 
 #endif // VISITOR_H

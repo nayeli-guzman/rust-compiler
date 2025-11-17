@@ -1,0 +1,49 @@
+=== STDOUT ===
+NO
+NO
+TOKEN(FUN, "fn")
+TOKEN(ID, "main")
+TOKEN(LPAREN, "(")
+TOKEN(RPAREN, ")")
+TOKEN(ARROW, "->")
+TOKEN(ID, "i32")
+TOKEN(LBRACK, "{")
+TOKEN(LET, "let")
+TOKEN(MUT, "mut")
+TOKEN(ID, "i")
+TOKEN(COLON, ":")
+TOKEN(ID, "i32")
+TOKEN(SEMICOL, ";")
+TOKEN(ID, "i")
+TOKEN(ASSIGN, "=")
+TOKEN(NUM, "0")
+TOKEN(SEMICOL, ";")
+TOKEN(WHILE, "while")
+TOKEN(ID, "i")
+TOKEN(LE, "<")
+TOKEN(NUM, "3")
+TOKEN(LBRACK, "{")
+TOKEN(PRINT, "println!")
+TOKEN(LPAREN, "(")
+TOKEN(PRINT_NUM, ""{}"")
+TOKEN(COMA, ",")
+TOKEN(ID, "i")
+TOKEN(RPAREN, ")")
+TOKEN(SEMICOL, ";")
+TOKEN(ID, "i")
+TOKEN(ASSIGN, "=")
+TOKEN(ID, "i")
+TOKEN(PLUS, "+")
+TOKEN(NUM, "1")
+TOKEN(SEMICOL, ";")
+TOKEN(RBRACK, "}")
+TOKEN(RETURN, "return")
+TOKEN(NUM, "0")
+TOKEN(SEMICOL, ";")
+TOKEN(RBRACK, "}")
+Parser exitoso
+Codigo:
+
+Generando codigo ensamblador en rust-inputs/input-4.s
+
+=== STDERR ===

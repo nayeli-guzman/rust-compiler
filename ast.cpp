@@ -45,6 +45,9 @@ PrintStm::~PrintStm(){}
 
 AssignStm::~AssignStm(){}
 
+// LetStm::LetStm() {}
+LetStm::~LetStm() {}
+
 IfStm::IfStm(Exp* c, Body* t, Body* e): condition(c), then(t), els(e) {}
 
 WhileStm::WhileStm(Exp* c, Body* t): condition(c), b(t) {}
@@ -58,14 +61,26 @@ AssignStm::AssignStm(string variable,Exp* expresion){
     e = expresion;
 }
 
+LetStm::LetStm(string variable, string type, Exp* expresion, bool mut){
+    id = variable;
+    e = expresion;
+    this->type = type;
+    this->mut = mut;
+}
+
 // -------------------- var -----------------
 
-VarDec::VarDec() {}
+GlobalVar::GlobalVar() {}
+GlobalVar::~GlobalVar() {}
 
+
+
+
+VarDec::VarDec() {}
 VarDec::~VarDec() {}
 
 Body::Body(){
-    declarations=list<VarDec*>();
+    //declarations=list<VarDec*>();
     StmList=list<Stm*>();
 }
 

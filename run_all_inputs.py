@@ -17,12 +17,12 @@ if result.returncode != 0:
 print("Compilación exitosa")
 
 # Ejecutar
-input_dir = "inputs"
+input_dir = "rust-inputs"
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
 
 for i in range(1, 15):
-    filename = f"input{i}.txt"
+    filename = f"input-{i}.rs"
     filepath = os.path.join(input_dir, filename)
 
     if os.path.isfile(filepath):
@@ -30,6 +30,14 @@ for i in range(1, 15):
         run_cmd = ["./a.out", filepath]
         result = subprocess.run(run_cmd, capture_output=True, text=True)
 
+
+        # Guardar stdout y stderr
+        output_file = os.path.join(output_dir, f"output{i}.txt")
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write("=== STDOUT ===\n")
+            f.write(result.stdout)
+            f.write("\n=== STDERR ===\n")
+            f.write(result.stderr)
         
         # Archivos generados
         tokens_file = os.path.join(input_dir, f"input{i}.s")  # se crea en inputs/
@@ -43,3 +51,8 @@ for i in range(1, 15):
 
     else:
         print(filename, "no encontrado en", input_dir)
+
+
+
+
+

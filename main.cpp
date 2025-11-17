@@ -49,6 +49,9 @@ int main(int argc, const char* argv[]) {
             return 1;
         }
 
+    PrintVisitor impresion;
+    impresion.imprimir(program);
+
     cout << "Generando codigo ensamblador en " << outputFilename << endl;
     GenCodeVisitor codigo(outfile);
     codigo.generar(program);

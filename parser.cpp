@@ -33,10 +33,12 @@ bool Parser::check(Token::Type ttype) {
 
 bool Parser::advance() {
     if (!isAtEnd()) {
-        Token* temp = current;
+        Token* last_tok = current;
         if (previous) delete previous;
         current = scanner->nextToken();
-        previous = temp;
+        previous = last_tok;
+        cout << last_tok << endl;
+        // cout << current << endl;
 
         if (check(Token::ERR)) {
             throw runtime_error("Error lexico");
@@ -57,18 +59,24 @@ bool Parser::isAtEnd() {
 
 Program* Parser::parseProgram() {
     Program* p = new Program();
+
     if(check(Token::STATIC)) {
         p->vdlist.push_back(parseGlobalVar());
         while(check(Token::STATIC)) {
             p->vdlist.push_back(parseGlobalVar());
         }
     }
+
     if(check(Token::FUN)) {
         p->fdlist.push_back(parseFunDec());
         while(check(Token::FUN)){
                 p->fdlist.push_back(parseFunDec());
             }
         }
+    
+    if (!isAtEnd()) {
+        throw runtime_error("Se encontraron tokens extra después del último elemento del programa");
+    }    
     cout << "Parser exitoso" << endl;
     return p;
 }
@@ -85,6 +93,7 @@ GlobalVar* Parser::parseGlobalVar(){
         vd->mut = 1;
     }
     else vd->mut = 0;
+
     
     match(Token::ID);
     vd->var = previous->text;
@@ -112,16 +121,29 @@ FunDec *Parser::parseFunDec() {
     fd->nombre = previous->text;
 
     match(Token::LPAREN);
-    if(check(Token::ID)) {
-        while(match(Token::ID)) {
+
+    if (check(Token::ID)) {
+
+        match(Token::ID);
+        fd->Pnombres.push_back(previous->text);
+
+        match(Token::COLON);
+
+        match(Token::ID);
+        fd->Ptipos.push_back(previous->text);
+
+        while (match(Token::COMA)) {
+            match(Token::ID);
             fd->Pnombres.push_back(previous->text);
             match(Token::COLON);
+
             match(Token::ID);
             fd->Ptipos.push_back(previous->text);
-            match(Token::COMA);
         }
     }
+
     match(Token::RPAREN);
+
 
     if(match(Token::ARROW)) {
         match(Token::ID);
@@ -137,14 +159,19 @@ FunDec *Parser::parseFunDec() {
     return fd;
 }
 
-Body* Parser::parseBody(){
+Body* Parser::parseBody() {
     Body* b = new Body();
-    
-    b->StmList.push_back(parseStm());
-    while(match(Token::SEMICOL)) {
-        b->StmList.push_back(parseStm());
-    }
+ 
+    while (true) {
+        if (check(Token::RBRACK)) break;
 
+        Stm* stm = parseStm();
+
+        if (!stm) break;
+
+        b->StmList.push_back(stm);
+        match(Token::SEMICOL);
+    }
     return b;
 }
 
@@ -173,13 +200,15 @@ Stm* Parser::parseStm() {
         match(Token::ID);
         type = previous->text;
         
-        match(Token::ASSIGN);
-        e = parseCE();
+        // match(Token::ASSIGN);
+        // e = parseCE();
 
         return new LetStm(variable, type, e, mut);
     }
     else if(match(Token::PRINT)){
         match(Token::LPAREN);
+        match(Token::PRINT_NUM);
+        match(Token::COMA);
         e = parseCE();
         match(Token::RPAREN);
         return new PrintStm(e);
@@ -195,11 +224,11 @@ Stm* Parser::parseStm() {
         e = parseCE();
         
         if (!match(Token::LBRACK)) {
-            cout << "Error: se esperaba 'then' después de la expresión." << endl;
+            cout << "Error: se esperaba '{' después de la expresión." << endl;
             exit(1);
         }
         tb = parseBody();
-        match(Token::RPAREN);
+        match(Token::RBRACK);
 
         if (match(Token::ELSE)) {
             match(Token::LBRACK);
@@ -212,17 +241,18 @@ Stm* Parser::parseStm() {
     else if (match(Token::WHILE)) {
         e = parseCE();
         if (!match(Token::LBRACK)) {
-            cout << "Error: se esperaba 'do' después de la expresión." << endl;
+            cout << "Error: se esperaba '{' después de la expresión." << endl;
             exit(1);
         }
         tb = parseBody();
         if (!match(Token::RBRACK)) {
-            cout << "Error: se esperaba 'endwhile' al final de la declaración." << endl;
+            cout << "Error: se esperaba '}' al final de la declaración." << endl;
             exit(1);
         }
         a = new WhileStm(e, tb);
     }
     else{
+        if (check(Token::RBRACK)) return nullptr;
         throw runtime_error("Error sintáctico");
     }
     return a;
@@ -301,15 +331,21 @@ Exp* Parser::parseF() {
     else if (match(Token::ID)) {
         nom = previous->text;
         if(check(Token::LPAREN)) {
+            
             match(Token::LPAREN);
             FcallExp* fcall = new FcallExp();
             fcall->nombre = nom;
-            fcall->argumentos.push_back(parseCE());
-            while(match(Token::COMA)) {
+
+            if (!check(Token::RPAREN)) {
                 fcall->argumentos.push_back(parseCE());
+                while (match(Token::COMA)) {
+                    fcall->argumentos.push_back(parseCE());
+                }
             }
+
             match(Token::RPAREN);
             return fcall;
+
         }
         else {
             return new IdExp(nom);

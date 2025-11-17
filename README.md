@@ -3,10 +3,7 @@
 ## Gramática del Lenguaje (mini-Rust, EBNF)
 
 ```ebnf
-Program        ::= { Item } EOF ;
-
-Item           ::= GlobalVar
-                 | FunDec ;
+Program        ::= { GlobalVar } { FunDec } EOF ;
 
 GlobalVar      ::= "static" [ "mut" ] Identifier ":" Type "=" CE ";" ;
 
@@ -17,7 +14,7 @@ FunDec         ::= "fn" Identifier "(" [ ParamList ] ")"
 ParamList      ::= Param { "," Param } ;
 Param          ::= Identifier ":" Type ;
 
-Block          ::= "{" { Stm } "}" ;
+Block          ::= "{" { Stm [ ";" ] } "}" ;
 
 Stm            ::= LetStm
                  | AssignStm
@@ -26,14 +23,12 @@ Stm            ::= LetStm
                  | IfStm
                  | WhileStm ;
 
-LetStm         ::= "let" [ "mut" ] Identifier [ ":" Type ] [ "=" CE ] ";" ;
-AssignStm      ::= Identifier "=" CE ";" ;
-PrintStm       ::= "print" "(" CE ")" ";" ;
-ReturnStm      ::= "return" [ CE ] ";" ;
+LetStm         ::= "let" [ "mut" ] Identifier ":" Type "=" CE ;
+AssignStm      ::= Identifier "=" CE ;
+PrintStm       ::= "println!" "(" "{}" "," CE ")" ;
+ReturnStm      ::= "return" "(" CE ")" ;
 
-IfStm          ::= "if" CE Block
-                   [ "else" Block ] ;
-
+IfStm          ::= "if" CE Block [ "else" Block ] ;
 WhileStm       ::= "while" CE Block ;
 
 CE             ::= BE [ "<=" BE ] ;
