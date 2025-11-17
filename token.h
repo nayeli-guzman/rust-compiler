@@ -21,7 +21,7 @@ public:
         NUM,     // Número
         ERR,     // Error
         ID,      // ID
-        LE,
+        LT,
         FUN,
         ENDFUN,
         RETURN,

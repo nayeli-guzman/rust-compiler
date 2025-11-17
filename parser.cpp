@@ -166,10 +166,14 @@ Body* Parser::parseBody() {
         if (check(Token::RBRACK)) break;
 
         Stm* stm = parseStm();
-
         if (!stm) break;
 
-        b->StmList.push_back(stm);
+        if (auto letStm = dynamic_cast<LetStm*>(stm)) {
+            b->vars.push_back(letStm);
+        } else {
+            b->StmList.push_back(stm);
+        }
+
         match(Token::SEMICOL);
     }
     return b;
@@ -260,8 +264,8 @@ Stm* Parser::parseStm() {
 
 Exp* Parser::parseCE() {
     Exp* l = parseBE();
-    if (match(Token::LE)) {
-        BinaryOp op = LE_OP;
+    if (match(Token::LT)) {
+        BinaryOp op = LT_OP;
         Exp* r = parseBE();
         l = new BinaryExp(l, r, op);
     }

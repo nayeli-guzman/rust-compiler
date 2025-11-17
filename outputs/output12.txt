@@ -1,6 +1,4 @@
 === STDOUT ===
-NO
-NO
 TOKEN(FUN, "fn")
 TOKEN(ID, "signo")
 TOKEN(LPAREN, "(")
@@ -13,7 +11,7 @@ TOKEN(ID, "i32")
 TOKEN(LBRACK, "{")
 TOKEN(IF, "if")
 TOKEN(ID, "x")
-TOKEN(LE, "<")
+TOKEN(LT, "<")
 TOKEN(NUM, "5")
 TOKEN(LBRACK, "{")
 TOKEN(RETURN, "return")

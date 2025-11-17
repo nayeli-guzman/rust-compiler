@@ -5,17 +5,17 @@ print_fmt: .string "%ld \n"
 main:
  pushq %rbp
  movq %rsp, %rbp
- subq $0, %rsp
+ subq $8, %rsp
  movq $10, %rax
- movq %rax, 0(%rbp)
- movq 0(%rbp), %rax
+ movq %rax, -8(%rbp)
+ movq -8(%rbp), %rax
  pushq %rax
  movq $5, %rax
  movq %rax, %rcx
  popq %rax
  cmpq %rcx, %rax
  movl $0, %eax
- setle %al
+ setl %al
  movzbq %al, %rax
  cmpq $0, %rax
  je else_0

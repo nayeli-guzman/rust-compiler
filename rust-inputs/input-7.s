@@ -14,7 +14,7 @@ fib:
  popq %rax
  cmpq %rcx, %rax
  movl $0, %eax
- setle %al
+ setl %al
  movzbq %al, %rax
  cmpq $0, %rax
  je else_0
@@ -22,6 +22,27 @@ fib:
  jmp .end_fib
  jmp endif_0
  else_0:
+ movq -8(%rbp), %rax
+ pushq %rax
+ movq $1, %rax
+ movq %rax, %rcx
+ popq %rax
+ subq %rcx, %rax
+ mov %rax, %rdi
+call fib
+ pushq %rax
+ movq -8(%rbp), %rax
+ pushq %rax
+ movq $2, %rax
+ movq %rax, %rcx
+ popq %rax
+ subq %rcx, %rax
+ mov %rax, %rdi
+call fib
+ movq %rax, %rcx
+ popq %rax
+ addq %rcx, %rax
+ jmp .end_fib
 endif_0:
 .end_fib:
 leave

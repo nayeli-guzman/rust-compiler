@@ -6,12 +6,12 @@ suma:
  pushq %rbp
  movq %rsp, %rbp
  movq %rdi,-8(%rbp)
- subq $8, %rsp
+ subq $16, %rsp
  movq $10, %rax
- movq %rax, 0(%rbp)
+ movq %rax, -16(%rbp)
  movq -8(%rbp), %rax
  pushq %rax
- movq 0(%rbp), %rax
+ movq -16(%rbp), %rax
  movq %rax, %rcx
  popq %rax
  addq %rcx, %rax

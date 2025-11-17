@@ -73,11 +73,12 @@ int ReturnStm::accept(Visitor* visitor){
 
 int GenCodeVisitor::generar(Program* program) {
     program->accept(this);
-        return 0;
+    return 0;
 }
 
 int GenCodeVisitor::visit(Program* program) {
-out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
+
+    out << ".data\nprint_fmt: .string \"%ld \\n\""<<endl;
 
     for (auto dec : program->vdlist){
         dec->accept(this);
@@ -106,7 +107,7 @@ int GenCodeVisitor::visit(VarDec* stm) {
             offset -= 8;
         }
     }
-        return 0;
+    return 0;
 }
 
 
@@ -117,6 +118,12 @@ int GenCodeVisitor::visit(NumberExp* exp) {
 }
 
 int GenCodeVisitor::visit(GlobalVar* exp) {
+    if (!entornoFuncion) {
+        memoriaGlobal[exp->var] = true;
+    } else {
+        memoria[exp->var] = offset;
+        offset -= 8;
+    }
     return 0;
 }
 
@@ -141,10 +148,10 @@ int GenCodeVisitor::visit(BinaryExp* exp) {
         case MUL_OP:   out << " imulq %rcx, %rax\n"; break;
         case DIV_OP:   out << " imulq %rcx, %rax\n"; break;
         case POW_OP:   out << " imulq %rcx, %rax\n"; break;
-        case LE_OP:
+        case LT_OP:
             out << " cmpq %rcx, %rax\n"
                       << " movl $0, %eax\n"
-                      << " setle %al\n"
+                      << " setl %al\n"
                       << " movzbq %al, %rax\n";
             break;
     }
@@ -210,7 +217,13 @@ int GenCodeVisitor::visit(ReturnStm* stm) {
     return 0;
 }
 
-int GenCodeVisitor::visit(LetStm* stm) {
+int GenCodeVisitor::visit(LetStm* exp) {
+    if (!entornoFuncion) {
+        memoriaGlobal[exp->id] = true;
+    } else {
+        memoria[exp->id] = offset;
+        offset -= 8;
+    }
     return 0;
 }
 
@@ -230,9 +243,10 @@ int GenCodeVisitor::visit(FunDec* f) {
         out << " movq " << argRegs[i] << "," << offset << "(%rbp)" << endl;
         offset -= 8;
     }
-    // for (auto i: f->cuerpo->declarations){
-    //     i->accept(this);
-    // }
+    
+    for (auto i: f->cuerpo->vars){
+        i->accept(this);
+    }
     int reserva = -offset - 8;
     out << " subq $" << reserva << ", %rsp" << endl;
     for (auto i: f->cuerpo->StmList){

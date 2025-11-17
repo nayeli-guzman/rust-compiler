@@ -1,6 +1,4 @@
 === STDOUT ===
-NO
-NO
 TOKEN(FUN, "fn")
 TOKEN(ID, "id")
 TOKEN(LPAREN, "(")

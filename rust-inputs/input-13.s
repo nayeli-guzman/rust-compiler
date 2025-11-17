@@ -14,7 +14,7 @@ fac:
  popq %rax
  cmpq %rcx, %rax
  movl $0, %eax
- setle %al
+ setl %al
  movzbq %al, %rax
  cmpq $0, %rax
  je else_0
@@ -44,35 +44,35 @@ ret
 main:
  pushq %rbp
  movq %rsp, %rbp
- subq $0, %rsp
+ subq $8, %rsp
  movq $1, %rax
- movq %rax, 0(%rbp)
+ movq %rax, -8(%rbp)
 while_1:
- movq 0(%rbp), %rax
+ movq -8(%rbp), %rax
  pushq %rax
  movq $20, %rax
  movq %rax, %rcx
  popq %rax
  cmpq %rcx, %rax
  movl $0, %eax
- setle %al
+ setl %al
  movzbq %al, %rax
  cmpq $0, %rax
  je endwhile_1
- movq 0(%rbp), %rax
+ movq -8(%rbp), %rax
  mov %rax, %rdi
 call fac
  movq %rax, %rsi
  leaq print_fmt(%rip), %rdi
  movl $0, %eax
  call printf@PLT
- movq 0(%rbp), %rax
+ movq -8(%rbp), %rax
  pushq %rax
  movq $1, %rax
  movq %rax, %rcx
  popq %rax
  addq %rcx, %rax
- movq %rax, 0(%rbp)
+ movq %rax, -8(%rbp)
  jmp while_1
 endwhile_1:
  movq $0, %rax

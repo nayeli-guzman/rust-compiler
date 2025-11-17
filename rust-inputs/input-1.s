@@ -1,5 +1,6 @@
 .data
 print_fmt: .string "%ld \n"
+X: .quad 0
 .text
 .globl suma
 suma:
@@ -7,15 +8,15 @@ suma:
  movq %rsp, %rbp
  movq %rdi,-8(%rbp)
  movq %rsi,-16(%rbp)
- subq $16, %rsp
+ subq $24, %rsp
  movq -8(%rbp), %rax
  pushq %rax
  movq -16(%rbp), %rax
  movq %rax, %rcx
  popq %rax
  addq %rcx, %rax
- movq %rax, 0(%rbp)
- movq 0(%rbp), %rax
+ movq %rax, -24(%rbp)
+ movq -24(%rbp), %rax
  jmp .end_suma
 .end_suma:
 leave

@@ -9,6 +9,7 @@ using namespace std;
 
 class Visitor;
 class VarDec;
+class LetStm;
 
 // Operadores binarios soportados
 enum BinaryOp { 
@@ -17,7 +18,7 @@ enum BinaryOp {
     MUL_OP, 
     DIV_OP,
     POW_OP,
-    LE_OP
+    LT_OP // <
 };
 
 // Clase abstracta Exp
@@ -88,6 +89,7 @@ public:
 
 class Body{
 public:
+    list<LetStm*> vars;
     list<Stm*> StmList;
     int accept(Visitor* visitor);
     Body();

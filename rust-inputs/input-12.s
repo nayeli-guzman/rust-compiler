@@ -14,7 +14,7 @@ signo:
  popq %rax
  cmpq %rcx, %rax
  movl $0, %eax
- setle %al
+ setl %al
  movzbq %al, %rax
  cmpq $0, %rax
  je else_0

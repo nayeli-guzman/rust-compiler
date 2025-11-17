@@ -1,5 +1,4 @@
 === STDOUT ===
-NO
 TOKEN(STATIC, "static")
 TOKEN(MUT, "mut")
 TOKEN(ID, "X")
@@ -8,7 +7,6 @@ TOKEN(ID, "i32")
 TOKEN(ASSIGN, "=")
 TOKEN(NUM, "0")
 TOKEN(SEMICOL, ";")
-NO
 TOKEN(FUN, "fn")
 TOKEN(ID, "suma")
 TOKEN(LPAREN, "(")

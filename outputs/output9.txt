@@ -1,6 +1,4 @@
 === STDOUT ===
-NO
-NO
 TOKEN(FUN, "fn")
 TOKEN(ID, "main")
 TOKEN(LPAREN, "(")
@@ -36,7 +34,7 @@ TOKEN(NUM, "4")
 TOKEN(SEMICOL, ";")
 TOKEN(IF, "if")
 TOKEN(ID, "a")
-TOKEN(LE, "<")
+TOKEN(LT, "<")
 TOKEN(ID, "b")
 TOKEN(LBRACK, "{")
 TOKEN(LET, "let")
