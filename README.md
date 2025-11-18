@@ -3,7 +3,11 @@
 ## Gramática del Lenguaje (mini-Rust, EBNF)
 
 ```ebnf
-Program        ::= { GlobalVar } { FunDec } EOF ;
+Program        ::= { StructDec } { GlobalVar } { FunDec } EOF ;
+
+StructDec      ::= "struct" Identifier "{" StructFieldList "}" ;
+StructFieldList::= [ StructField { "," StructField } ] ;
+StructField    ::= Identifier ":" Type ;
 
 GlobalVar      ::= "static" [ "mut" ] Identifier ":" Type "=" CE ";" ;
 
@@ -24,24 +28,34 @@ Stm            ::= LetStm
                  | WhileStm ;
 
 LetStm         ::= "let" [ "mut" ] Identifier ":" Type "=" CE ;
-AssignStm      ::= Identifier "=" CE ;
+
+AssignStm   ::= LValue "=" CE ;
+LValue      ::= Identifier { "." Identifier } ;
+
 PrintStm       ::= "println!" "(" "{}" "," CE ")" ;
 ReturnStm      ::= "return" "(" CE ")" ;
 
 IfStm          ::= "if" CE Block [ "else" Block ] ;
 WhileStm       ::= "while" CE Block ;
 
-CE             ::= BE [ "<=" BE ] ;
+CE             ::= BE [ "<" BE ] ;
 BE             ::= E { ("+" | "-") E } ;
 E              ::= T { ("*" | "/") T } ;
 T              ::= F [ "^" F ] ;
 
-F              ::= Number
+F              ::= Primary { "." Identifier } ;
+
+Primary        ::= Number
                  | "true"
                  | "false"
                  | "(" CE ")"
                  | Identifier
-                 | Identifier "(" [ CE { "," CE } ] ")" ;
+                 | Identifier "(" [ CE { "," CE } ] ")"
+                 | Identifier "{" [ FieldInitList ] "}" ;
+
+FieldInitList  ::= FieldInit { "," FieldInit } ;
+FieldInit      ::= Identifier ":" CE ;
+
 
 Type           ::= Identifier ;
 

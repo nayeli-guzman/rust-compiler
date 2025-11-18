@@ -42,6 +42,11 @@ public:
     virtual int visit(FcallExp* fcall) = 0;
     virtual int visit(ReturnStm* r) = 0;
     virtual int visit(FunDec* fd) = 0;
+
+    virtual int visit(StructLitExp* ) = 0;
+    virtual int visit(FieldAccessExp* ) = 0;
+    virtual int visit(StructField* ) = 0;
+    virtual int visit(StructDec* ) = 0;
 };
 
 
@@ -72,6 +77,11 @@ public:
     int visit(FcallExp* fcall) override;
     int visit(ReturnStm* r) override;
     int visit(FunDec* fd) override;
+
+    int visit(StructLitExp* ) override;
+    int visit(FieldAccessExp* ) override;
+    int visit(StructField* ) override;
+    int visit(StructDec* ) override;
 };
 
 
@@ -94,6 +104,12 @@ public:
     int visit(ReturnStm* r) override;
     int visit(FunDec* fd) override;
     void imprimir(Program* program); 
+
+    int visit(StructLitExp* ) override;
+    int visit(FieldAccessExp* ) override;
+    int visit(StructField* ) override;
+    int visit(StructDec* ) override;
+
 };
 
 

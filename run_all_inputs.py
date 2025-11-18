@@ -17,11 +17,11 @@ if result.returncode != 0:
 print("Compilación exitosa")
 
 # Ejecutar
-input_dir = "rust-inputs"
+input_dir = "struct-inputs"
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
 
-for i in range(1, 15):
+for i in range(1, 6):
     filename = f"input-{i}.rs"
     filepath = os.path.join(input_dir, filename)
 

@@ -47,7 +47,9 @@ public:
         ARROW, // ->
         LBRACK, // {
         RBRACK,  // }
-        PRINT_NUM // "{}"
+        PRINT_NUM, // "{}"
+        DOT,
+        STRUCT
     };
 
     // Atributos

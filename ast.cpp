@@ -37,6 +37,10 @@ IdExp::IdExp(string v) : value(v) {}
 
 IdExp::~IdExp() {}
 
+FieldAccessExp::FieldAccessExp(Exp* b, const std::string& f)
+        : base(b), field(f) {}
+FieldAccessExp::~FieldAccessExp(){}
+
 // ------------------ Stm -------------------
 
 Stm::~Stm(){}
@@ -73,8 +77,11 @@ LetStm::LetStm(string variable, string type, Exp* expresion, bool mut){
 GlobalVar::GlobalVar() {}
 GlobalVar::~GlobalVar() {}
 
+StructDec::StructDec() {}
+StructDec::~StructDec() {}
 
-
+StructField::StructField() {}
+StructField::~StructField() {}
 
 VarDec::VarDec() {}
 VarDec::~VarDec() {}

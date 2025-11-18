@@ -14,6 +14,21 @@ int NumberExp::accept(Visitor* visitor) {
     return visitor->visit(this);
 }
 
+int StructLitExp::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
+
+int FieldAccessExp::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
+
+int StructDec::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
+
+int StructField::accept(Visitor* visitor) {
+    return visitor->visit(this);
+}
 
 int Program::accept(Visitor* visitor) {
     return visitor->visit(this);
@@ -271,6 +286,24 @@ int GenCodeVisitor::visit(FcallExp* exp) {
 }
 
 
+int GenCodeVisitor::visit(StructLitExp* exp) {
+    return 0;
+}
+
+int GenCodeVisitor::visit(FieldAccessExp* exp) {
+    return 0;
+}
+
+int GenCodeVisitor::visit(StructField* exp) {
+    return 0;
+}
+
+int GenCodeVisitor::visit(StructDec* exp) {
+    return 0;
+}
+    
+
+
 
 
 
@@ -402,3 +435,18 @@ int PrintVisitor::visit(WhileStm* stm) {
     return 0;
 }
 
+int PrintVisitor::visit(StructLitExp* exp) {
+    return 0;
+}
+
+int PrintVisitor::visit(FieldAccessExp* exp) {
+    return 0;
+}
+
+int PrintVisitor::visit(StructField* exp) {
+    return 0;
+}
+
+int PrintVisitor::visit(StructDec* exp) {
+    return 0;
+}

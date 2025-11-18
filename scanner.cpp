@@ -76,11 +76,12 @@ Token* Scanner::nextToken() {
         else if (lexema=="static") return new Token(Token::STATIC, input, first, current - first);
         else if (lexema=="mut") return new Token(Token::MUT, input, first, current - first);
         else if (lexema=="let") return new Token(Token::LET, input, first, current - first);
+        else if (lexema=="struct") return new Token(Token::STRUCT, input, first, current - first);
 
         else return new Token(Token::ID, input, first, current - first);
     }
     // Operadores
-    else if (strchr("+/-*();=<:,{}\"", c)) {
+    else if (strchr("+/-*();=<:,{}.\"", c)) {
         switch (c) {
             case '<': token = new Token(Token::LT,  c); break;
             case '+': token = new Token(Token::PLUS,  c); break;
@@ -120,6 +121,7 @@ Token* Scanner::nextToken() {
             case ',': token = new Token(Token::COMA,c); break;
             case '{': token = new Token(Token::LBRACK,c); break;
             case '}': token = new Token(Token::RBRACK,c); break;
+            case '.': token = new Token(Token::DOT,c); break;
 
         }
         current++;

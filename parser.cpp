@@ -60,6 +60,13 @@ bool Parser::isAtEnd() {
 Program* Parser::parseProgram() {
     Program* p = new Program();
 
+    if(check(Token::STRUCT)) {
+        p->sdlist.push_back(parseStructDec());
+        while(check(Token::STRUCT)) {
+            p->sdlist.push_back(parseStructDec());
+        }
+    }
+
     if(check(Token::STATIC)) {
         p->vdlist.push_back(parseGlobalVar());
         while(check(Token::STATIC)) {
@@ -77,7 +84,9 @@ Program* Parser::parseProgram() {
     if (!isAtEnd()) {
         throw runtime_error("Se encontraron tokens extra después del último elemento del programa");
     }    
+    
     cout << "Parser exitoso" << endl;
+    
     return p;
 }
 
@@ -111,6 +120,41 @@ GlobalVar* Parser::parseGlobalVar(){
     match(Token::SEMICOL);
     
     return vd;
+}
+
+StructDec *Parser::parseStructDec() {
+
+    StructDec* fd = new StructDec();
+
+    match(Token::STRUCT);
+    
+    match(Token::ID);
+    fd->nombre = previous->text;
+
+    match(Token::LBRACK);
+    fd->body = parseStructField();
+    match(Token::RBRACK);
+
+    return fd;
+}
+
+StructField* Parser::parseStructField() {
+    StructField* b = new StructField();
+    
+    while (true) {
+        if (check(Token::RBRACK)) break;
+
+        match(Token::ID);
+        b->atributes.push_back(previous->text);
+        
+        match(Token::COLON);
+
+        match(Token::ID);
+        b->types.push_back(previous->text);
+
+        match(Token::COMA);
+    }
+    return b;
 }
 
 FunDec *Parser::parseFunDec() {
@@ -179,17 +223,31 @@ Body* Parser::parseBody() {
     return b;
 }
 
+string Parser::parseLValueName() {
+    match(Token::ID);
+    std::string name = previous->text;
+
+    while (match(Token::DOT)) {
+        match(Token::ID);
+        name += "." + previous->text;
+    }
+
+    return name;
+}
+
 Stm* Parser::parseStm() {
     Stm* a;
     Exp* e;
     string variable;
     Body* tb = nullptr;
     Body* fb = nullptr;
-    if(match(Token::ID)){
-        variable = previous->text;
-        match(Token::ASSIGN);
+    if (check(Token::ID)) {
+        variable = parseLValueName();
+        if (!match(Token::ASSIGN)) {
+            throw runtime_error("Se esperaba '=' en la asignación");
+        }
         e = parseCE();
-        return new AssignStm(variable,e);
+        return new AssignStm(variable, e);
     }
     else if (match(Token::LET)) {
         bool mut = false;
@@ -204,8 +262,8 @@ Stm* Parser::parseStm() {
         match(Token::ID);
         type = previous->text;
         
-        // match(Token::ASSIGN);
-        // e = parseCE();
+        match(Token::ASSIGN);
+        e = parseCE();
 
         return new LetStm(variable, type, e, mut);
     }
@@ -315,6 +373,19 @@ Exp* Parser::parseT() {
 }
 
 Exp* Parser::parseF() {
+
+    Exp* e = parsePrimary();
+
+    while (match(Token::DOT)) {
+        match(Token::ID);
+        string fieldName = previous->text;
+        e = new FieldAccessExp(e, fieldName);
+    }
+
+    return e;
+}
+
+Exp* Parser::parsePrimary() {
     Exp* e;
     string nom;
     if (match(Token::NUM)) {
@@ -350,6 +421,32 @@ Exp* Parser::parseF() {
             match(Token::RPAREN);
             return fcall;
 
+        }
+        else if (check(Token::LBRACK)) {
+            match(Token::LBRACK);
+
+            StructLitExp* s = new StructLitExp();
+            s->nombre = nom;
+
+            if (!check(Token::RBRACK)) { // si no viene directamente '}'
+                // FieldInit ::= Identifier ":" CE
+                match(Token::ID);
+                string fieldName = previous->text;
+                match(Token::COLON);
+                Exp* fieldExp = parseCE();
+                s->fields.push_back({fieldName, fieldExp});
+
+                while (match(Token::COMA)) {
+                    match(Token::ID);
+                    fieldName = previous->text;
+                    match(Token::COLON);
+                    fieldExp = parseCE();
+                    s->fields.push_back({fieldName, fieldExp});
+                }
+            }
+
+            match(Token::RBRACK);
+            return s;
         }
         else {
             return new IdExp(nom);

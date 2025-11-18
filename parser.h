@@ -18,12 +18,16 @@ public:
     FunDec* parseFunDec();
     Body* parseBody();
     GlobalVar* parseGlobalVar();
+    StructDec* parseStructDec();
+    StructField* parseStructField();
     Stm* parseStm();
     Exp* parseCE();
     Exp* parseBE();
     Exp* parseE();
     Exp* parseT();
     Exp* parseF();
+    Exp* parsePrimary();
+    string parseLValueName();
 };
 
 #endif // PARSER_H      

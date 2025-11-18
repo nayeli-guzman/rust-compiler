@@ -10,6 +10,7 @@ using namespace std;
 class Visitor;
 class VarDec;
 class LetStm;
+class StructField;
 
 // Operadores binarios soportados
 enum BinaryOp { 
@@ -87,6 +88,17 @@ public:
 };
 
 
+class StructDec {
+public:
+    
+    string nombre;
+    StructField *body;
+
+    StructDec();
+    int accept(Visitor* visitor);
+    ~StructDec();
+};
+
 class Body{
 public:
     list<LetStm*> vars;
@@ -94,6 +106,17 @@ public:
     int accept(Visitor* visitor);
     Body();
     ~Body();
+};
+
+class StructField{
+public:
+    list<string> atributes;
+    list<string> types;
+    list<Exp*> values;
+
+    int accept(Visitor* visitor);
+    StructField();
+    ~StructField();
 };
 
 // ------------------ Stm -------------------
@@ -179,10 +202,32 @@ class Program{
 public:
     list<GlobalVar*> vdlist;
     list<FunDec*> fdlist;
+    list<StructDec*> sdlist;
+
     Program(){};
     ~Program(){};
     int accept(Visitor* visitor);
 };
+
+class FieldAccessExp : public Exp {
+public:
+    Exp* base;       // expresión a la izquierda del punto
+    std::string field; // nombre del campo
+
+    FieldAccessExp(Exp* b, const std::string& f);
+    int accept(Visitor* v);
+    ~FieldAccessExp();
+};
+
+class StructLitExp : public Exp {
+public:
+    string nombre;
+    vector<pair<string, Exp*>> fields;
+
+    int accept(Visitor* v);
+
+};
+
 
 
 
