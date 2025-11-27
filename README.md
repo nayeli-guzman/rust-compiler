@@ -9,7 +9,7 @@ StructDec      ::= "struct" Identifier "{" StructFieldList "}" ;
 StructFieldList::= [ StructField { "," StructField } ] ;
 StructField    ::= Identifier ":" Type ;
 
-GlobalVar      ::= "static" [ "mut" ] Identifier ":" Type ";" ;
+GlobalVar      ::= "static" [ "mut" ] Identifier ":" Type "=" CE ";" ;
 
 FunDec         ::= "fn" Identifier "(" [ ParamList ] ")"
                    [ "->" Type ]
