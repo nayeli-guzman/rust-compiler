@@ -6,6 +6,10 @@ TOKEN(ID, "value")
 TOKEN(COLON, ":")
 TOKEN(ID, "i64")
 TOKEN(COMA, ",")
+TOKEN(ID, "temp")
+TOKEN(COLON, ":")
+TOKEN(ID, "i64")
+TOKEN(COMA, ",")
 TOKEN(RBRACK, "}")
 TOKEN(FUN, "fn")
 TOKEN(ID, "main")
@@ -21,6 +25,10 @@ TOKEN(ASSIGN, "=")
 TOKEN(ID, "Counter")
 TOKEN(LBRACK, "{")
 TOKEN(ID, "value")
+TOKEN(COLON, ":")
+TOKEN(NUM, "0")
+TOKEN(COMA, ",")
+TOKEN(ID, "temp")
 TOKEN(COLON, ":")
 TOKEN(NUM, "0")
 TOKEN(RBRACK, "}")
@@ -83,8 +91,6 @@ TOKEN(NUM, "0")
 TOKEN(RPAREN, ")")
 TOKEN(RBRACK, "}")
 Parser exitoso
-Codigo:
-
 Generando codigo ensamblador en struct-inputs/input-5.s
 
 === STDERR ===

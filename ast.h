@@ -79,8 +79,8 @@ public:
 class GlobalVar{
 public:
     Exp* val;
-    string type;
-    string var; // id
+    string type; // Point
+    string var; // id.  ORIGIN
     bool mut; // is mut o no?
     GlobalVar();
     int accept(Visitor* visitor);

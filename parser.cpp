@@ -1,4 +1,4 @@
-#include<iostream>
+#include <iostream>
 #include "token.h"
 #include "scanner.h"
 #include "ast.h"
@@ -116,7 +116,6 @@ GlobalVar* Parser::parseGlobalVar(){
 
     e = parseCE();
     vd->val = e;
-
     match(Token::SEMICOL);
     
     return vd;
@@ -264,7 +263,7 @@ Stm* Parser::parseStm() {
         
         match(Token::ASSIGN);
         e = parseCE();
-
+        
         return new LetStm(variable, type, e, mut);
     }
     else if(match(Token::PRINT)){

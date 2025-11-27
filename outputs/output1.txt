@@ -22,8 +22,6 @@ TOKEN(NUM, "0")
 TOKEN(RPAREN, ")")
 TOKEN(RBRACK, "}")
 Parser exitoso
-Codigo:
-
 Generando codigo ensamblador en struct-inputs/input-1.s
 
 === STDERR ===

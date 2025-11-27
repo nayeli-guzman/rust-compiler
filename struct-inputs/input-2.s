@@ -1,12 +1,14 @@
 .data
-print_fmt: .string "%ld \n"
-ORIGIN: .quad 0
+print_fmt: 
+.string "%ld \n"
+ORIGIN:
+.quad 0
+.quad 0
 .text
 .globl main
 main:
  pushq %rbp
  movq %rsp, %rbp
- subq $0, %rsp
  movq $0, %rax
  jmp .end_main
 .end_main:

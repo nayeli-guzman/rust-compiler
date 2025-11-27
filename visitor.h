@@ -25,8 +25,7 @@ class FunDec;
 
 
 class Visitor {
-public:
-    // 
+public: 
     virtual int visit(BinaryExp* exp) = 0;
     virtual int visit(NumberExp* exp) = 0;
     virtual int visit(IdExp* exp) = 0;
@@ -58,10 +57,18 @@ public:
     int generar(Program* program);
     unordered_map<string, int> memoria;
     unordered_map<string, bool> memoriaGlobal;
+    unordered_map<string, string> varTypes; // Added for struct support
+    
     int offset = -8;
     int labelcont = 0;
     bool entornoFuncion = false;
+    bool structLet = false;
+    bool structVar = false;
+    bool countStruct = false;
     string nombreFuncion;
+    
+    int getStructSize(string structName); // Helper
+
     int visit(BinaryExp* exp) override;
     int visit(NumberExp* exp) override;
     int visit(IdExp* exp) override;
@@ -85,32 +92,15 @@ public:
 };
 
 
-class PrintVisitor : public Visitor {
-public:
+struct StructInfo {
+    std::vector<std::string> fieldOrder;
+    std::unordered_map<std::string,int> fieldOffset;
+    std::unordered_map<std::string,std::string> fieldType;
 
-    int visit(BinaryExp* exp) override;
-    int visit(NumberExp* exp) override;
-    int visit(IdExp* exp) override;
-    int visit(Program* p) override ;
-    int visit(PrintStm* stm) override;
-    int visit(AssignStm* stm) override;
-    int visit(WhileStm* stm) override;
-    int visit(IfStm* stm) override;
-    int visit(LetStm* stm) override;
-    int visit(Body* body) override;
-    int visit(VarDec* vd) override;
-    int visit(GlobalVar* ) override;
-    int visit(FcallExp* fcall) override;
-    int visit(ReturnStm* r) override;
-    int visit(FunDec* fd) override;
-    void imprimir(Program* program); 
-
-    int visit(StructLitExp* ) override;
-    int visit(FieldAccessExp* ) override;
-    int visit(StructField* ) override;
-    int visit(StructDec* ) override;
-
+    int totalSize = 0;  // tamaño en bytes del struct completo
 };
 
+
+extern unordered_map<string, StructInfo> structTable; // Extern declaration
 
 #endif // VISITOR_H
