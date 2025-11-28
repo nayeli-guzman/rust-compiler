@@ -44,6 +44,7 @@ ostream& operator<<(ostream& outs, const Token& tok) {
         case Token::DO:    outs << "TOKEN(DO, \""    << tok.text << "\")"; break;
         case Token::ENDIF:    outs << "TOKEN(ENDIF, \""    << tok.text << "\")"; break;
         case Token::ENDWHILE:    outs << "TOKEN(ENDWHILE, \""    << tok.text << "\")"; break;
+        case Token::FOR:    outs << "TOKEN(FOR, \""    << tok.text << "\")"; break;
         case Token::ELSE:    outs << "TOKEN(ELSE, \""    << tok.text << "\")"; break;
         case Token::VAR:    outs << "TOKEN(VAR, \""    << tok.text << "\")"; break;
         case Token::COMA:    outs << "TOKEN(COMA, \""    << tok.text << "\")"; break;
@@ -67,6 +68,7 @@ ostream& operator<<(ostream& outs, const Token& tok) {
         
         case Token::RCORCH:    outs << "TOKEN(RCORCH, \""    << tok.text << "\")"; break;
         case Token::LCORCH:    outs << "TOKEN(LCORCH, \""    << tok.text << "\")"; break;
+        case Token::IMPL:    outs << "TOKEN(IMPL, \""    << tok.text << "\")"; break;
 
         case Token::END:    outs << "TOKEN(END)"; break;
     }

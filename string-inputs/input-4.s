@@ -81,7 +81,7 @@ ret
 .LC_str3:
  .string "\"---- Programa 4 ----\")"
 .LC_str2:
- .string "\"tres\"\n"
+ .string "\"tres\""
 .LC_str1:
  .string "\"dos\","
 .LC_str0:

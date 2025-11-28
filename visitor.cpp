@@ -922,3 +922,10 @@ int GenCodeVisitor::visit(FcallStm* stm) {
     return 0;
 }
 
+int GenCodeVisitor::visit(ImplDec* impl) {
+    return 0;
+}
+
+int GenCodeVisitor::visit(ExpStm* expr) {
+    return 0;
+}

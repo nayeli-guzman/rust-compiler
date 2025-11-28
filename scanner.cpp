@@ -64,6 +64,7 @@ Token* Scanner::nextToken() {
         else if (lexema=="do") return new Token(Token::DO, input, first, current - first);
         else if (lexema=="endif") return new Token(Token::ENDIF, input, first, current - first);
         else if (lexema=="endwhile") return new Token(Token::ENDWHILE, input, first, current - first);
+        else if (lexema=="for") return new Token(Token::FOR, input, first, current - first);
         else if (lexema=="else") return new Token(Token::ELSE, input, first, current - first);
         else if (lexema=="var") return new Token(Token::VAR, input, first, current - first);
         else if (lexema=="true") return new Token(Token::TRUE, input, first, current - first);
@@ -77,6 +78,7 @@ Token* Scanner::nextToken() {
         else if (lexema=="mut") return new Token(Token::MUT, input, first, current - first);
         else if (lexema=="let") return new Token(Token::LET, input, first, current - first);
         else if (lexema=="struct") return new Token(Token::STRUCT, input, first, current - first);
+        else if (lexema=="impl") return new Token(Token::IMPL, input, first, current - first);
 
         else return new Token(Token::ID, input, first, current - first);
     }

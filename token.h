@@ -34,6 +34,7 @@ public:
         THEN,
         ENDIF,
         ENDWHILE,
+        FOR,
         ELSE,
         END,      // Fin de entrada
         VAR,
@@ -52,7 +53,8 @@ public:
         STRUCT,
         RCORCH,  // ]
         LCORCH,   // [
-        STRING
+        STRING,
+        IMPL
     };
 
     // Atributos

@@ -198,11 +198,26 @@ public:
     ~FunDec(){};
 };
 
+// =====================================
+// NUEVO: nodo para impl de operadores
+// =====================================
+class ImplDec {
+public:
+    string traitName;   // Add, Sub, etc.
+    string typeName;    // Punto, Vector, etc.
+    FunDec* method;     // La función que implementa el operador
+
+    ImplDec(const string& trait, const string& type, FunDec* m)
+        : traitName(trait), typeName(type), method(m) {}
+    int accept(Visitor* v);
+};
+
 class Program{
 public:
     list<GlobalVar*> vdlist;
     list<FunDec*> fdlist;
     list<StructDec*> sdlist;
+    list<ImplDec*> impls;   // <<< NUEVO
 
     Program(){};
     ~Program(){};
@@ -252,6 +267,14 @@ struct FcallStm : public Stm {
     FcallExp* call;          
     FcallStm(FcallExp* c) : call(c) {}
     int accept(Visitor* v) override;
+};
+
+class ExpStm : public Stm {
+public:
+    Exp* expr;
+    ExpStm(Exp* e) : expr(e) {}
+    int accept(Visitor* v);
+    ~ExpStm() {}
 };
 
 

@@ -74,6 +74,13 @@ Program* Parser::parseProgram() {
         }
     }
 
+    if (check(Token::IMPL)) {
+        p->impls.push_back(parseImplDec());
+        while (check(Token::IMPL)) {
+            p->impls.push_back(parseImplDec());
+        }
+    }
+
     if(check(Token::FUN)) {
         p->fdlist.push_back(parseFunDec());
         while(check(Token::FUN)){
@@ -89,6 +96,34 @@ Program* Parser::parseProgram() {
     
     return p;
 }
+
+ImplDec* Parser::parseImplDec() {
+    match(Token::IMPL);
+
+    match(Token::ID);
+    string traitName = previous->text;
+
+    match(Token::FOR);
+
+    match(Token::ID);
+    string typeName = previous->text;
+
+    match(Token::LBRACK);
+
+    vector<FunDec*> methods;
+
+    // permite varias funciones dentro del impl
+    while (check(Token::FUN)) {
+        methods.push_back(parseFunDec());
+    }
+
+    match(Token::RBRACK);
+
+    // si tu clase ImplDec solo guarda una función, cámbiala a vector
+    // mientras tanto devolvemos solo la primera para no romper tu AST
+    return new ImplDec(traitName, typeName, methods[0]);
+}
+
 
 GlobalVar* Parser::parseGlobalVar(){
     
@@ -138,8 +173,7 @@ StructDec *Parser::parseStructDec() {
 StructField* Parser::parseStructField() {
     StructField* b = new StructField();
     
-    while (true) {
-        if (check(Token::RBRACK)) break;
+    while (!check(Token::RBRACK)) {
 
         match(Token::ID);
         b->atributes.push_back(previous->text);
@@ -147,10 +181,17 @@ StructField* Parser::parseStructField() {
         match(Token::COLON);
         b->types.push_back(parseType());
 
-        match(Token::COMA);
+        // coma opcional
+        if (check(Token::COMA)) {
+            match(Token::COMA);
+        } else {
+            break;  // último elemento
+        }
     }
+
     return b;
 }
+
 
 FunDec *Parser::parseFunDec() {
     FunDec* fd = new FunDec();
@@ -234,19 +275,35 @@ Stm* Parser::parseStm() {
     Body* tb = nullptr;
     Body* fb = nullptr;
     if (check(Token::ID)) {
-        // Parsear algo que empieza por ID: puede ser LValue o llamada
-        Exp* e0 = parseF();   // usa Primary + FSuffix (., [ ])
+        // --- PEEK: si después del ID viene '{', NO estamos en un statement ---
+        Token* savePrev = previous;
+        Token* saveCurr = current;
 
-        // ¿Es asignación?  LValue "=" CE
+        // "Simular" un parsePrimary muy ligero:
+        match(Token::ID);  // Avanzamos solo 1 token
+        bool isStructLit = check(Token::LBRACK); // "{"
+
+        // Restaurar estado del scanner
+        previous = savePrev;
+        current = saveCurr;
+
+        if (isStructLit) {
+            // Esto NO es un statement, es parte de una expresión
+            return nullptr;
+        }
+
+        // --- AQUÍ SÍ estamos seguros de que un ID puede iniciar un statement ---
+        Exp* e0 = parseF();
+
         if (match(Token::ASSIGN)) {
             Exp* rhs = parseCE();
             return new AssignStm(e0, rhs);
         }
 
-        // No hubo "=", si esto es una llamada a función, lo tomamos como statement
         if (auto call = dynamic_cast<FcallExp*>(e0)) {
             return new FcallStm(call);
         }
+
         throw runtime_error("Se esperaba '=' en la asignación o una llamada a función");
     }
     else if (match(Token::LET)) {
@@ -311,11 +368,6 @@ Stm* Parser::parseStm() {
         }
         a = new WhileStm(e, tb);
     }
-    else{
-        if (check(Token::RBRACK)) return nullptr;
-        throw runtime_error("Error sintáctico");
-    }
-    return a;
 }
 
 Exp* Parser::parseCE() {
@@ -415,8 +467,9 @@ Exp* Parser::parsePrimary() {
     }
     else if (match(Token::ID)) {
         nom = previous->text;
-        if(check(Token::LPAREN)) {
-            
+
+        // ---- 1. llamada a función ----
+        if (check(Token::LPAREN)) {
             match(Token::LPAREN);
             FcallExp* fcall = new FcallExp();
             fcall->nombre = nom;
@@ -430,38 +483,34 @@ Exp* Parser::parsePrimary() {
 
             match(Token::RPAREN);
             return fcall;
-
         }
-        else if (check(Token::LBRACK)) {
+
+        // ---- 2. struct literal ----
+        if (check(Token::LBRACK)) {  // '{'
             match(Token::LBRACK);
 
             StructLitExp* s = new StructLitExp();
             s->nombre = nom;
 
-            if (!check(Token::RBRACK)) { // si no viene directamente '}'
-                // FieldInit ::= Identifier ":" CE
-                match(Token::ID);
-                string fieldName = previous->text;
-                match(Token::COLON);
-                Exp* fieldExp = parseCE();
-                s->fields.push_back({fieldName, fieldExp});
-
-                while (match(Token::COMA)) {
+            // campos
+            if (!check(Token::RBRACK)) {
+                do {
                     match(Token::ID);
-                    fieldName = previous->text;
+                    string fname = previous->text;
                     match(Token::COLON);
-                    fieldExp = parseCE();
-                    s->fields.push_back({fieldName, fieldExp});
-                }
+                    Exp* val = parseCE();
+                    s->fields.push_back({fname, val});
+                } while (match(Token::COMA));
             }
 
             match(Token::RBRACK);
             return s;
         }
-        else {
-            return new IdExp(nom);
-            }
+
+        // ---- 3. caso normal: variable ----
+        return new IdExp(nom);
     }
+
     else if (match(Token::LCORCH)) {   // '['
         vector<Exp*> elems;
 

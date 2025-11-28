@@ -30,7 +30,7 @@ public:
     string parseLValueName();
     string parseType();
     Exp* parseLValue();
-
+    ImplDec* parseImplDec();
 };
 
 #endif // PARSER_H      

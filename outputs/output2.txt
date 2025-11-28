@@ -1,57 +1,5 @@
 === STDOUT ===
-TOKEN(STATIC, "static")
-TOKEN(ID, "TITULO")
-TOKEN(COLON, ":")
-TOKEN(ID, "String")
-TOKEN(ASSIGN, "=")
-
-TOKEN(SEMICOL, ";")
-TOKEN(FUN, "fn")
-TOKEN(ID, "main")
-TOKEN(LPAREN, "(")
-TOKEN(RPAREN, ")")
-TOKEN(LBRACK, "{")
-TOKEN(LET, "let")
-TOKEN(ID, "linea")
-TOKEN(COLON, ":")
-TOKEN(ID, "String")
-TOKEN(ASSIGN, "=")
-
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-TOKEN(ID, "TITULO")
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-TOKEN(ID, "linea")
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(RETURN, "return")
-TOKEN(LPAREN, "(")
-TOKEN(NUM, "0")
-TOKEN(RPAREN, ")")
-TOKEN(RBRACK, "}")
-Parser exitoso
-Generando codigo ensamblador en string-inputs/input-2.s
 
 === STDERR ===
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  Se encontraron tokens extra después del último elemento del programa
