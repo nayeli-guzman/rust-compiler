@@ -28,6 +28,9 @@ public:
     Exp* parseF();
     Exp* parsePrimary();
     string parseLValueName();
+    string parseType();
+    Exp* parseLValue();
+
 };
 
 #endif // PARSER_H      

@@ -34,6 +34,8 @@ while_0:
  leaq print_fmt(%rip), %rdi
  movl $0, %eax
  call printf@PLT
+ leaq -16(%rbp), %rcx
+ addq $0, %rcx
  leaq -16(%rbp), %rax
  addq $0, %rax
  movq (%rax), %rax
@@ -42,10 +44,6 @@ while_0:
  movq %rax, %rcx
  popq %rax
  addq %rcx, %rax
- pushq %rax
- leaq -16(%rbp), %rcx
- addq $0, %rcx
- popq %rax
  movq %rax, (%rcx)
  jmp while_0
 endwhile_0:

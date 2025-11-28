@@ -9,13 +9,43 @@ using namespace std;
 string g_lastType; // Global to track type of last evaluated expression
 unordered_map<string, StructInfo> structTable; // Definition of structTable
 
+// --- helpers ---
+
+static bool isArrayType(const std::string& t) {
+    return !t.empty() && t.front() == '[' && t.back() == ']';
+}
+
+static void parseArrayType(const std::string& t, std::string& elemType, int& length) {
+    // t = "[T;N]"
+    size_t semi  = t.find(';');
+    size_t close = t.rfind(']');
+    if (semi == std::string::npos || close == std::string::npos) {
+        elemType = "i64";
+        length = 1;
+        return;
+    }
+    elemType = t.substr(1, semi - 1);                    // entre '[' y ';'
+    std::string nStr = t.substr(semi + 1, close - semi - 1);
+    length = std::stoi(nStr);
+}
+
+int GenCodeVisitor::getTypeSize(const string& t) {
+    if (structTable.count(t)) {
+        return structTable[t].totalSize;
+    }
+    if (isArrayType(t)) {
+        std::string elemType;
+        int len = 0;
+        parseArrayType(t, elemType, len);
+        return len * getTypeSize(elemType);
+    }
+    return 8;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 int GenCodeVisitor::getStructSize(string structName) {
-    if (structTable.count(structName)) {
-        return structTable[structName].totalSize;
-    }
-    return 8; // escalar
+    return getTypeSize(structName);
 }
 
 int GenCodeVisitor::generar(Program* program) {
@@ -69,15 +99,13 @@ int GenCodeVisitor::visit(NumberExp* exp) {
 }
 
 int GenCodeVisitor::visit(GlobalVar* exp) {
-    varTypes[exp->var] = exp->type; // Track type
+    varTypes[exp->var] = exp->type; 
     if (!entornoFuncion) {
         memoriaGlobal[exp->var] = true;
-
         out << exp->var << ":" << endl;
         structVar = true;
         exp->val->accept(this);
         structVar = false;
-
     } else {
         memoria[exp->var] = offset;
         offset -= 8;
@@ -86,27 +114,66 @@ int GenCodeVisitor::visit(GlobalVar* exp) {
 }
 
 int GenCodeVisitor::visit(IdExp* exp) {
-    if (memoriaGlobal.count(exp->value)) {
-        // Global var
-        if (varTypes.count(exp->value)) g_lastType = varTypes[exp->value];
-        
-        if (varTypes.count(exp->value) && structTable.count(varTypes[exp->value])) {
-             // It is a global struct. Return address.
-             out << " leaq " << exp->value << "(%rip), %rax" << endl;
-        } else {
-             out << " movq " << exp->value << "(%rip), %rax"<<endl;
-        }
-    }
-    else {
-        // Local var
+    if (memoriaGlobal.count(exp->value)) { // Global var
         if (varTypes.count(exp->value)) g_lastType = varTypes[exp->value];
 
-        if (varTypes.count(exp->value) && structTable.count(varTypes[exp->value])) {
-            // It is a local struct. Return address.
-            out << " leaq " << memoria[exp->value] << "(%rbp), %rax" << endl;
-        } else {
-            out << " movq " << memoria[exp->value] << "(%rbp), %rax"<<endl;
+        bool isStruct = varTypes.count(exp->value) &&
+                        structTable.count(varTypes[exp->value]);
+        bool isArray  = varTypes.count(exp->value) &&
+                        isArrayType(varTypes[exp->value]);
+
+        if (isStruct || isArray) { // struct o array global -> dirección
+            out << " leaq " << exp->value << "(%rip), %rax" << endl;
+        } else { // escalar global
+            out << " movq " << exp->value << "(%rip), %rax" << endl;
         }
+    } else { // Local var
+        if (varTypes.count(exp->value)) g_lastType = varTypes[exp->value];
+
+        bool isStruct = varTypes.count(exp->value) &&
+                        structTable.count(varTypes[exp->value]);
+        bool isArray  = varTypes.count(exp->value) &&
+                        isArrayType(varTypes[exp->value]);
+
+        if (isStruct || isArray) { // struct o array local -> dirección
+            out << " leaq " << memoria[exp->value] << "(%rbp), %rax" << endl;
+        } else { // escalar local
+            out << " movq " << memoria[exp->value] << "(%rbp), %rax" << endl;
+        }
+    }
+    return 0;
+}
+
+int GenCodeVisitor::visit(IndexExp* exp) {
+    // 1) base (array) -> &array o &elem base
+    exp->array->accept(this);          // %rax = &arr  (IdExp ya da dirección)
+    string arrayType = g_lastType;
+
+    string elemType;
+    int len = 0;
+    if (isArrayType(arrayType)) {
+        parseArrayType(arrayType, elemType, len);
+    } else {
+        elemType = arrayType;          // fallback
+    }
+
+    // base address -> %rcx
+    out << " movq %rax, %rcx" << endl;
+
+    // 2) índice
+    exp->index->accept(this);          // %rax = índice
+
+    int elemSize = getTypeSize(elemType);
+    out << " imulq $" << elemSize << ", %rax" << endl; // idx * elemSize
+    out << " addq %rax, %rcx" << endl;                 // %rcx = &arr[i]
+
+    g_lastType = elemType;
+
+    // 3) cargar valor o dejar dirección
+    if (!structTable.count(elemType) && !isArrayType(elemType)) {
+        out << " movq (%rcx), %rax" << endl;           // escalar
+    } else {
+        out << " movq %rcx, %rax" << endl;             // struct o array -> dirección
     }
     return 0;
 }
@@ -134,126 +201,154 @@ int GenCodeVisitor::visit(BinaryExp* exp) {
 }
 
 int GenCodeVisitor::visit(AssignStm* stm) {
-    
-    string fullId = stm->id;
-    size_t dotPos = fullId.find('.');
+    // 1. dirección del LHS en %rcx, y tipo del LHS
+    string lhsType = emitLValueAddress(stm->lhs);
 
-    // caso 1: asignación simple
-    if (dotPos == std::string::npos) {
-        std::string varName = fullId;
-        bool isGlobal = memoriaGlobal.count(varName);
-        bool isStruct = varTypes.count(varName) && structTable.count(varTypes[varName]);
+    bool lhsIsStruct = structTable.count(lhsType);
+    bool lhsIsArray  = isArrayType(lhsType);
 
-        if (!isStruct) {
-            // Escalar
-            stm->e->accept(this);  // valor en %rax
-            if (isGlobal)
-                out << " movq %rax, " << varName << "(%rip)" << endl;
-            else
-                out << " movq %rax, " << memoria[varName] << "(%rbp)" << endl;
+    // 2. casos: struct literal y array literal, donde NO se evalua RHS “normalmente”
+    // --- Struct literal: lhs es struct, rhs es StructLitExp ---
+    if (lhsIsStruct) {
+        if (auto lit = dynamic_cast<StructLitExp*>(stm->e)) {
+            StructInfo &info = structTable[lhsType];
+            unordered_map<std::string, Exp*> fieldExprs;
+            for (auto &f : lit->fields) {
+                fieldExprs[f.first] = f.second;
+            }
+
+            // %rcx = &struct destino (lhs)
+            for (const std::string &fname : info.fieldOrder) {
+                Exp *fe = fieldExprs.count(fname) ? fieldExprs[fname] : nullptr;
+                string fType = info.fieldType[fname];
+                int off = info.fieldOffset[fname];
+
+                if (structTable.count(fType)) {
+                    // struct anidado en el campo
+                    StructInfo &nInfo = structTable[fType];
+                    StructLitExp* nestedLit = fe ? dynamic_cast<StructLitExp*>(fe) : nullptr;
+
+                    unordered_map<std::string, Exp*> nestedMap;
+                    if (nestedLit) {
+                        for (auto &nf : nestedLit->fields) {
+                            nestedMap[nf.first] = nf.second;
+                        }
+                    }
+
+                    out << " leaq " << off << "(%rcx), %rdx" << endl; // &campo struct
+
+                    for (const std::string &nfName : nInfo.fieldOrder) {
+                        Exp *nfExp = nestedMap.count(nfName) ? nestedMap[nfName] : nullptr;
+                        if (nfExp) {
+                            nfExp->accept(this);
+                        } else {
+                            out << " movq $0, %rax" << endl;
+                        }
+                        int nOff = nInfo.fieldOffset[nfName];
+                        out << " movq %rax, " << nOff << "(%rdx)" << endl;
+                    }
+                } else { // campo escalar
+                    if (fe) {
+                        fe->accept(this);     // %rax = valor
+                    } else {
+                        out << " movq $0, %rax" << endl;
+                    }
+                    out << " movq %rax, " << off << "(%rcx)" << endl;
+                }
+            }
+
+            out << " movq %rcx, %rax" << endl; // resultado de la asignación = &struct
             return 0;
         }
+    }
 
-        // Struct completo: p = q; o p = Point { ... };
+    // --- Array literal: lhs es array, rhs es ArrayLitExp ---
+    if (lhsIsArray) {
+        if (auto litArr = dynamic_cast<ArrayLitExp*>(stm->e)) {
+            std::string elemType;
+            int len = 0;
+            parseArrayType(lhsType, elemType, len);
+            int elemSize = getTypeSize(elemType);
 
-        std::string structName = varTypes[varName];
-        StructInfo &info = structTable[structName];
+            // ---- CASO: array de structs ----
+            if (structTable.count(elemType)) {
+                StructInfo &info = structTable[elemType];
 
-        // Dirección destino (&p) en %rcx
-        if (isGlobal)
-            out << " leaq " << varName << "(%rip), %rcx" << endl;
-        else
-            out << " leaq " << memoria[varName] << "(%rbp), %rcx" << endl;
+                for (int i = 0; i < len; ++i) {
+                    // &lhs[i] en %rdx
+                    int elemOff = i * elemSize;
+                    out << " leaq " << elemOff << "(%rcx)" << ", %rdx" << endl;
 
-        // Caso literal: p = Point { ... };
-        if (auto lit = dynamic_cast<StructLitExp*>(stm->e)) {
-            std::unordered_map<std::string, Exp*> fieldExprs;
-            for (auto &f : lit->fields)
-                fieldExprs[f.first] = f.second;
+                    StructLitExp *se = nullptr;
+                    if (i < (int)litArr->elems.size()) {
+                        se = dynamic_cast<StructLitExp*>(litArr->elems[i]);
+                    }
 
-            for (const std::string &fname : info.fieldOrder) {
-                Exp *fe = nullptr;
-                if (fieldExprs.count(fname))
-                    fe = fieldExprs[fname];
+                    std::unordered_map<std::string, Exp*> fieldExprs;
+                    if (se) {
+                        for (auto &f : se->fields) {
+                            fieldExprs[f.first] = f.second;
+                        }
+                    }
 
-                if (fe)
-                    fe->accept(this);      // valor campo en %rax
-                else
+                    for (const std::string &fname : info.fieldOrder) {
+                        Exp *fe = fieldExprs.count(fname) ? fieldExprs[fname] : nullptr;
+                        std::string fType = info.fieldType[fname];
+                        int fOff = info.fieldOffset[fname];
+
+                        if (structTable.count(fType)) {
+                            // anidado
+                            out << " movq $0, %rax" << endl;
+                            out << " movq %rax, " << fOff << "(%rdx)" << endl;
+                        } else {
+                            if (fe) {
+                                fe->accept(this);
+                            } else {
+                                out << " movq $0, %rax" << endl;
+                            }
+                            out << " movq %rax, " << fOff << "(%rdx)" << endl;
+                        }
+                    }
+                }
+
+                out << " movq %rcx, %rax" << endl;
+                return 0;
+            }
+
+            // ---- CASO: array de escalares (como ya hacías) ----
+            for (int i = 0; i < len; ++i) {
+                if (i < (int)litArr->elems.size()) {
+                    litArr->elems[i]->accept(this); // %rax = valor
+                } else {
                     out << " movq $0, %rax" << endl;
-
-                int off = info.fieldOffset[fname];
+                }
+                int off = i * elemSize;
                 out << " movq %rax, " << off << "(%rcx)" << endl;
             }
 
-            out << " movq %rcx, %rax" << endl; // resultado = &p (opcional)
+            out << " movq %rcx, %rax" << endl; // resultado de la asignación
             return 0;
         }
+    }
 
-        // Caso copia: p = q;
-        stm->e->accept(this);    // IdExp(q) -> &q en %rax
-        int size = getStructSize(structName);
+    // 3. caso general: evaluamos RHS una sola vez, resultado en %rax.
 
-        out << " movq %rax, %rsi" << endl;          // src = &q
-        out << " movq %rcx, %rdi" << endl;          // dst = &p
-        out << " movq $" << (size / 8) << ", %rcx" << endl;
-        out << " rep movsq" << endl;
-        out << " movq %rdi, %rax" << endl;
+    stm->e->accept(this);  // %rax = valor (escalar) o puntero (struct/array)
+
+    // escalar
+    if (!lhsIsStruct && !lhsIsArray) {
+        // En este caso, %rcx apunta directamente al escalar
+        out << " movq %rax, (%rcx)" << endl;
         return 0;
     }
 
-    // caso 2: asignación a campo
-    //        (c.value = expr, p.x = expr, line.p1.x = expr, ...)
-
-    // evaluamos RHS una sola vez
-    stm->e->accept(this);       // valor (o puntero, si struct) en %rax
-    out << " pushq %rax" << endl;
-
-    // partimos de fullId en base + campos
-    vector<string> parts;
-    size_t start = 0;
-    while (true) {
-        size_t pos = fullId.find('.', start);
-        if (pos == std::string::npos) {
-            parts.push_back(fullId.substr(start));
-            break;
-        }
-        parts.push_back(fullId.substr(start, pos - start));
-        start = pos + 1;
-    }
-
-    string baseVar = parts[0];
-    string currentType = varTypes[baseVar];
-
-    // cargar dirección base (&baseVar) en %rcx
-    if (memoriaGlobal.count(baseVar))
-        out << " leaq " << baseVar << "(%rip), %rcx" << endl;
-    else
-        out << " leaq " << memoria[baseVar] << "(%rbp), %rcx" << endl;
-
-    // recorrer campos para llegar a la dirección final
-    for (size_t i = 1; i < parts.size(); ++i) {
-        const std::string &field = parts[i];
-        StructInfo &info = structTable[currentType];
-        int off = info.fieldOffset[field];
-        out << " addq $" << off << ", %rcx" << endl;
-        currentType = info.fieldType[field];  // tipo del siguiente nivel
-    }
-
-    // ahora %rcx apunta al campo (c.value, o lo que sea)
-    out << " popq %rax" << endl;   // recuperar RHS
-
-    // ¿campo es struct o escalar?
-    if (structTable.count(currentType)) {
-        // Asignar un struct embebido: c.p1 = otraPoint;
-        int size = getStructSize(currentType);
-        out << " movq %rax, %rsi" << endl;   // src (puntero al struct RHS)
-        out << " movq %rcx, %rdi" << endl;   // dst (&campo)
-        out << " movq $" << (size / 8) << ", %rcx" << endl;
-        out << " rep movsq" << endl;
-    } else {
-        // escalar: c.value = expr
-        out << " movq %rax, (%rcx)" << endl;
-    }
+    // hubo struct o array
+    int totalSize = getTypeSize(lhsType);
+    out << " movq %rax, %rsi" << endl;          // src
+    out << " movq %rcx, %rdi" << endl;          // dst
+    out << " movq $" << (totalSize / 8) << ", %rcx" << endl;
+    out << " rep movsq" << endl;
+    out << " movq %rdi, %rax" << endl;          // resultado = &lhs
 
     return 0;
 }
@@ -269,11 +364,9 @@ int GenCodeVisitor::visit(PrintStm* stm) {
 }
 
 int GenCodeVisitor::visit(Body* b) {
-
-    for (auto s : b->StmList){
+    for (auto s : b->StmList)
         s->accept(this);
-    }
-        return 0;
+    return 0;
 }
 
 int GenCodeVisitor::visit(IfStm* stm) {
@@ -281,7 +374,7 @@ int GenCodeVisitor::visit(IfStm* stm) {
     stm->condition->accept(this);
     out << " cmpq $0, %rax"<<endl;
     out << " je else_" << label << endl;
-   stm->then->accept(this);
+    stm->then->accept(this);
     out << " jmp endif_" << label << endl;
     out << " else_" << label << ":"<< endl;
     if (stm->els) stm->els->accept(this);
@@ -308,58 +401,47 @@ int GenCodeVisitor::visit(ReturnStm* stm) {
 }
 
 int GenCodeVisitor::visit(LetStm* exp) {
-    // exp->id   -> nombre de la variable (p)
-    // exp->type -> nombre del tipo (Point, i64, etc.)
-    varTypes[exp->id] = exp->type; // registrar tipo de la variable
+    // registrar tipo
+    varTypes[exp->id] = exp->type;
 
-    // PRIMER PASE: solo calcular offsets, sin generar código
+    // 1. solo calcular offsets
     if (countStruct) {
-        if (structTable.count(exp->type)) {
-            // variable de tipo struct
-            int size = getStructSize(exp->type);
-            offset -= size;
-            memoria[exp->id] = offset;               // p -> offset base
-        } else {
-            // escalar: 8 bytes
-            offset -= 8;                             // PRIMERO restamos...
-            memoria[exp->id] = offset;               // ...luego guradamos offset
-        }
+        int size = getTypeSize(exp->type);
+        offset -= size;
+        memoria[exp->id] = offset;
         return 0;
     }
-    // SEGUNDO PASE: generar código de inicialización
-    if (structTable.count(exp->type)) {
-        // let l: Line = Line { ... };
+
+    // caso 1: struct 
+    if (structTable.count(exp->type)) { // let p: Punto = Punto { ... };
         int baseOff = memoria[exp->id];
-        out << " leaq " << baseOff << "(%rbp), %rcx\n";  // %rcx = &l
+        out << " leaq " << baseOff << "(%rbp), %rcx\n";  // %rcx = &p
 
         StructInfo &info = structTable[exp->type];
         auto *lit = dynamic_cast<StructLitExp*>(exp->e);
 
         unordered_map<string, Exp*> fieldExprs;
         if (lit) {
-            for (auto &f : lit->fields) {
+            for (auto &f : lit->fields)
                 fieldExprs[f.first] = f.second;
-            }
         }
 
         for (const std::string &fname : info.fieldOrder) {
             Exp *fe = fieldExprs.count(fname) ? fieldExprs[fname] : nullptr;
-            std::string fType = info.fieldType[fname];
+            string fType = info.fieldType[fname];
             int off = info.fieldOffset[fname];
 
-            if (structTable.count(fType)) {
-                //  struct anidado, ie: from: Point
+            if (structTable.count(fType)) { // struct anidado
                 auto *nestedLit = fe ? dynamic_cast<StructLitExp*>(fe) : nullptr;
                 StructInfo &nInfo = structTable[fType];
 
-                std::unordered_map<std::string, Exp*> nestedMap;
+                unordered_map<std::string, Exp*> nestedMap;
                 if (nestedLit) {
-                    for (auto &nf : nestedLit->fields) {
+                    for (auto &nf : nestedLit->fields)
                         nestedMap[nf.first] = nf.second;
-                    }
                 }
 
-                // &campo (ej &l.from) en %rdx
+                // &campo (ej &p.from) en %rdx
                 out << " leaq " << off << "(%rcx), %rdx\n";
 
                 for (const std::string &nfName : nInfo.fieldOrder) {
@@ -373,13 +455,11 @@ int GenCodeVisitor::visit(LetStm* exp) {
                     out << " movq %rax, " << nOff << "(%rdx)\n";
                 }
 
-            } else {
-                // Campo escalar normal
-                if (fe) {
-                    fe->accept(this);
-                } else {
+            } else { // Campo escalar normal
+                if (fe)
+                    fe->accept(this);           // %rax = valor
+                else
                     out << " movq $0, %rax\n";
-                }
                 out << " movq %rax, " << off << "(%rcx)\n";
             }
         }
@@ -388,6 +468,81 @@ int GenCodeVisitor::visit(LetStm* exp) {
         return 0;
     }
 
+    // caso 2: array local
+    if (isArrayType(exp->type)) {
+        int baseOff = memoria[exp->id];
+        out << " leaq " << baseOff << "(%rbp), %rcx\n";  // %rcx = &arr
+
+        std::string elemType;
+        int len = 0;
+        parseArrayType(exp->type, elemType, len);
+        int elemSize = getTypeSize(elemType);
+
+        auto *lit = dynamic_cast<ArrayLitExp*>(exp->e);
+
+        // ---- CASO: elemento es STRUCT ----
+        if (structTable.count(elemType)) {
+            StructInfo &info = structTable[elemType];
+            for (int i = 0; i < len; ++i) {
+                // &arr[i] en %rdx
+                int elemOff = i * elemSize;
+                out << " leaq " << elemOff << "(%rcx), %rdx\n";
+
+                StructLitExp *se = nullptr;
+                if (lit && i < (int)lit->elems.size()) {
+                    se = dynamic_cast<StructLitExp*>(lit->elems[i]);
+                }
+
+                // mapa campo -> Exp*
+                unordered_map<std::string, Exp*> fieldExprs;
+                if (se) {
+                    for (auto &f : se->fields) {
+                        fieldExprs[f.first] = f.second;
+                    }
+                }
+
+                // rellenar campos del struct
+                for (const std::string &fname : info.fieldOrder) {
+                    Exp *fe = fieldExprs.count(fname) ? fieldExprs[fname] : nullptr;
+                    string fType = info.fieldType[fname];
+                    int fOff = info.fieldOffset[fname];
+
+                    if (structTable.count(fType)) {
+                        // simplificación para structs anidados
+                        out << " movq $0, %rax\n";
+                        out << " movq %rax, " << fOff << "(%rdx)\n";
+                    } else {
+                        if (fe) {
+                            fe->accept(this);          // %rax = valor del campo
+                        } else {
+                            out << " movq $0, %rax\n";
+                        }
+                        out << " movq %rax, " << fOff << "(%rdx)\n";
+                    }
+                }
+            }
+        }
+        // ---- CASO: elemento ESCALAR ----
+        else {
+            for (int i = 0; i < len; ++i) {
+                if (lit && i < (int)lit->elems.size()) {
+                    lit->elems[i]->accept(this);   // %rax = valor del elemento
+                } else {
+                    out << " movq $0, %rax\n";     // padding con 0
+                }
+                int off = i * elemSize;
+                out << " movq %rax, " << off << "(%rcx)\n";
+            }
+        }
+
+        out << " movq %rcx, %rax\n";           // resultado de la expresión let
+        return 0;
+    }
+
+    // --- caso 3: ESCALAR normal: i64, bool, etc.
+    exp->e->accept(this);                      // %rax = valor de la expresión (ej: 2)
+    out << " movq %rax, " << memoria[exp->id] << "(%rbp)\n";
+    return 0;
 }
 
 int GenCodeVisitor::visit(FunDec* f) {
@@ -529,11 +684,7 @@ int GenCodeVisitor::visit(StructDec* exp) {
         info.fieldOffset[name] = idx;
         info.fieldType[name] = *itType;
 
-        int fieldSize = 8; // por defecto i64
-        if (structTable.count(*itType)) {
-            // si el campo es otro struct, usa su tamaño total
-            fieldSize = structTable[*itType].totalSize;
-        }
+        int fieldSize = getTypeSize(*itType);
 
         idx += fieldSize;
         ++itType;
@@ -544,3 +695,83 @@ int GenCodeVisitor::visit(StructDec* exp) {
     structTable[exp->nombre] = std::move(info);
     return 0;
 }
+
+int GenCodeVisitor::visit(ArrayLitExp* exp) {
+    if (structVar) {
+        // Contexto de inicialización global:
+        // static XS: [i64;3] = [1,2,3];
+        for (auto *e : exp->elems) {
+            e->accept(this);      // NumberExp con structVar=true emite ".quad N"
+        }
+        return 0;
+    }
+
+    out << " movq $0, %rax" << endl;
+    return 0;
+}
+
+string GenCodeVisitor::emitLValueAddress(Exp* lhs) {
+    // IdExp: variable simple
+    if (auto id = dynamic_cast<IdExp*>(lhs)) {
+        std::string name = id->value;
+        std::string t = varTypes[name]; // asumimos que siempre está
+
+        bool isGlobal = memoriaGlobal.count(name);
+
+        if (isGlobal)
+            out << " leaq " << name << "(%rip), %rcx" << endl;
+        else
+            out << " leaq " << memoria[name] << "(%rbp), %rcx" << endl;
+
+        g_lastType = t;
+        return t;
+    }
+
+    // FieldAccessExp: base.campo
+    if (auto fa = dynamic_cast<FieldAccessExp*>(lhs)) {
+        // Primero, dirección de la base
+        std::string baseType = emitLValueAddress(fa->base);  // deja &base en %rcx
+
+        StructInfo &info = structTable[baseType];
+        int off = info.fieldOffset[fa->field];
+
+        out << " addq $" << off << ", %rcx" << endl;
+
+        std::string t = info.fieldType[fa->field];
+        g_lastType = t;
+        return t;
+    }
+
+    // IndexExp: base[index]
+    if (auto ix = dynamic_cast<IndexExp*>(lhs)) {
+        // Dirección de la base (array o pointer) en %rcx
+        std::string arrType = emitLValueAddress(ix->array);
+
+        std::string elemType;
+        int len = 0;
+        if (isArrayType(arrType)) {
+            parseArrayType(arrType, elemType, len);
+        } else {
+            // caso raro: tratamos como pointer a un "elemType"
+            elemType = arrType;
+        }
+
+        // Guardar base
+        out << " movq %rcx, %rdx" << endl;   // %rdx = base
+
+        // índice en %rax
+        ix->index->accept(this);             // %rax = index
+
+        int elemSize = getTypeSize(elemType);
+        out << " imulq $" << elemSize << ", %rax" << endl;
+        out << " addq %rax, %rdx" << endl;
+        out << " movq %rdx, %rcx" << endl;   // %rcx = &base[index]
+
+        g_lastType = elemType;
+        return elemType;
+    }
+
+    // No debería pasar en un LValue válido
+    throw runtime_error("emitLValueAddress: LHS no es un lvalue válido");
+}
+

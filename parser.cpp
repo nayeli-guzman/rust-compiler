@@ -108,9 +108,7 @@ GlobalVar* Parser::parseGlobalVar(){
     vd->var = previous->text;
 
     match(Token::COLON);
-
-    match(Token::ID);
-    vd->type = previous->text;
+    vd->type = parseType();
 
     match(Token::ASSIGN);
 
@@ -147,9 +145,7 @@ StructField* Parser::parseStructField() {
         b->atributes.push_back(previous->text);
         
         match(Token::COLON);
-
-        match(Token::ID);
-        b->types.push_back(previous->text);
+        b->types.push_back(parseType());
 
         match(Token::COMA);
     }
@@ -171,17 +167,14 @@ FunDec *Parser::parseFunDec() {
         fd->Pnombres.push_back(previous->text);
 
         match(Token::COLON);
+        fd->Ptipos.push_back(parseType());
 
-        match(Token::ID);
-        fd->Ptipos.push_back(previous->text);
 
         while (match(Token::COMA)) {
             match(Token::ID);
             fd->Pnombres.push_back(previous->text);
             match(Token::COLON);
-
-            match(Token::ID);
-            fd->Ptipos.push_back(previous->text);
+            fd->Ptipos.push_back(parseType());
         }
     }
 
@@ -189,11 +182,11 @@ FunDec *Parser::parseFunDec() {
 
 
     if(match(Token::ARROW)) {
-        match(Token::ID);
-        fd->tipo = previous->text;
+        fd->tipo = parseType();
     } else {
         fd->tipo = "void";
     }
+
 
     match(Token::LBRACK);
     fd->cuerpo = parseBody();
@@ -241,12 +234,12 @@ Stm* Parser::parseStm() {
     Body* tb = nullptr;
     Body* fb = nullptr;
     if (check(Token::ID)) {
-        variable = parseLValueName();
+        Exp* lhs = parseLValue();
         if (!match(Token::ASSIGN)) {
             throw runtime_error("Se esperaba '=' en la asignación");
         }
         e = parseCE();
-        return new AssignStm(variable, e);
+        return new AssignStm(lhs, e);
     }
     else if (match(Token::LET)) {
         bool mut = false;
@@ -257,9 +250,7 @@ Stm* Parser::parseStm() {
         variable = previous->text;
         
         match(Token::COLON);
-        
-        match(Token::ID);
-        type = previous->text;
+        type = parseType();
         
         match(Token::ASSIGN);
         e = parseCE();
@@ -372,13 +363,22 @@ Exp* Parser::parseT() {
 }
 
 Exp* Parser::parseF() {
-
     Exp* e = parsePrimary();
 
-    while (match(Token::DOT)) {
-        match(Token::ID);
-        string fieldName = previous->text;
-        e = new FieldAccessExp(e, fieldName);
+    while (true) {
+        if (match(Token::DOT)) {
+            match(Token::ID);
+            string fieldName = previous->text;
+            e = new FieldAccessExp(e, fieldName);
+        }
+        else if (match(Token::LCORCH)) {       // '['
+            Exp* idx = parseCE();
+            match(Token::RCORCH);              // ']'
+            e = new IndexExp(e, idx);
+        }
+        else {
+            break;
+        }
     }
 
     return e;
@@ -451,7 +451,62 @@ Exp* Parser::parsePrimary() {
             return new IdExp(nom);
             }
     }
+    else if (match(Token::LCORCH)) {   // '['
+        vector<Exp*> elems;
+
+        if (!check(Token::RCORCH)) {   // no está vacío
+            elems.push_back(parseCE());
+            while (match(Token::COMA)) {
+                elems.push_back(parseCE());
+            }
+        }
+
+        match(Token::RCORCH);          // ']'
+        return new ArrayLitExp(elems);
+    }
     else {
         throw runtime_error("Error sintáctico");
     }
+}
+
+string Parser::parseType() {
+    // array type: [ Type ; Number ]
+    if (match(Token::LCORCH)) {     // '['
+        string inner = parseType();
+
+        match(Token::SEMICOL);   // ';'
+        match(Token::NUM);
+        string n = previous->text;
+
+        match(Token::RCORCH);       // ']'
+
+        return "[" + inner + ";" + n + "]";
+    }
+    // base type: Identifier
+    match(Token::ID);
+    return previous->text;
+}
+
+Exp* Parser::parseLValue() {
+    // asumimos que current es ID
+    match(Token::ID);
+    Exp* e = new IdExp(previous->text);
+
+    while (true) {
+        if (match(Token::DOT)) {
+            match(Token::ID);
+            std::string fieldName = previous->text;
+            e = new FieldAccessExp(e, fieldName);
+        }
+        else if (match(Token::LCORCH)) {    // '['
+            Exp* idx = parseCE();
+            match(Token::RCORCH);           // ']'
+            e = new IndexExp(e, idx);
+        }
+        else {
+            break;
+        }
+    }
+
+    return e;
 }

@@ -49,7 +49,9 @@ public:
         RBRACK,  // }
         PRINT_NUM, // "{}"
         DOT,
-        STRUCT
+        STRUCT,
+        RCORCH,  // ]
+        LCORCH   // [
     };
 
     // Atributos

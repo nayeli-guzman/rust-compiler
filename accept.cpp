@@ -80,3 +80,11 @@ int ReturnStm::accept(Visitor* visitor){
     return visitor->visit(this);
 }
 
+int ArrayLitExp::accept(Visitor* visitor){
+    return visitor->visit(this);
+}
+
+int IndexExp::accept(Visitor* visitor){
+    return visitor->visit(this);
+}
+

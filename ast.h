@@ -142,9 +142,9 @@ public:
 
 class AssignStm: public Stm {
 public:
-    string id;
+    Exp* lhs;
     Exp* e;
-    AssignStm(string, Exp*);
+    AssignStm(Exp*, Exp*);
     ~AssignStm();
     int accept(Visitor* visitor);
 };
@@ -228,7 +228,19 @@ public:
 
 };
 
+struct IndexExp : public Exp {
+    Exp* array;
+    Exp* index;
+    IndexExp(Exp* a, Exp* i) : array(a), index(i) {}
 
+    int accept(Visitor* v);
+};
+
+struct ArrayLitExp : public Exp {
+    vector<Exp*> elems;
+    ArrayLitExp(const vector<Exp*>& es) : elems(es) {}
+    int accept(Visitor* v);
+};
 
 
 #endif // AST_H

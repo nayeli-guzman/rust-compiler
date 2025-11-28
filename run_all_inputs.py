@@ -17,7 +17,7 @@ if result.returncode != 0:
 print("Compilación exitosa")
 
 # Ejecutar
-input_dir = "struct-inputs"
+input_dir = "arrays-inputs"
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
 
@@ -29,7 +29,6 @@ for i in range(1, 6):
         print(f"Ejecutando {filename}")
         run_cmd = ["./a.out", filepath]
         result = subprocess.run(run_cmd, capture_output=True, text=True)
-
 
         # Guardar stdout y stderr
         output_file = os.path.join(output_dir, f"output{i}.txt")

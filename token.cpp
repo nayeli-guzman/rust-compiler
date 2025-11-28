@@ -64,6 +64,9 @@ ostream& operator<<(ostream& outs, const Token& tok) {
         case Token::PRINT_NUM:    outs << "TOKEN(PRINT_NUM, \""    << tok.text << "\")"; break;
         case Token::DOT:    outs << "TOKEN(DOT, \""    << tok.text << "\")"; break;
         case Token::STRUCT:    outs << "TOKEN(STRUCT, \""    << tok.text << "\")"; break;
+        
+        case Token::RCORCH:    outs << "TOKEN(RCORCH, \""    << tok.text << "\")"; break;
+        case Token::LCORCH:    outs << "TOKEN(LCORCH, \""    << tok.text << "\")"; break;
 
         case Token::END:    outs << "TOKEN(END)"; break;
     }

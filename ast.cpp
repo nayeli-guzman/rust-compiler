@@ -60,8 +60,8 @@ PrintStm::PrintStm(Exp* expresion){
     e=expresion;
 }
 
-AssignStm::AssignStm(string variable,Exp* expresion){
-    id = variable;
+AssignStm::AssignStm(Exp* variable,Exp* expresion){
+    this->lhs = variable;
     e = expresion;
 }
 

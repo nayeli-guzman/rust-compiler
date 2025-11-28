@@ -41,11 +41,14 @@ public:
     virtual int visit(FcallExp* fcall) = 0;
     virtual int visit(ReturnStm* r) = 0;
     virtual int visit(FunDec* fd) = 0;
+    virtual int visit(ArrayLitExp* fd) = 0;
 
     virtual int visit(StructLitExp* ) = 0;
     virtual int visit(FieldAccessExp* ) = 0;
     virtual int visit(StructField* ) = 0;
     virtual int visit(StructDec* ) = 0;
+
+    virtual int visit(IndexExp* ) = 0;
 };
 
 
@@ -84,18 +87,27 @@ public:
     int visit(FcallExp* fcall) override;
     int visit(ReturnStm* r) override;
     int visit(FunDec* fd) override;
+    int visit(ArrayLitExp* fd) override;
+
 
     int visit(StructLitExp* ) override;
     int visit(FieldAccessExp* ) override;
     int visit(StructField* ) override;
     int visit(StructDec* ) override;
+
+    int visit(IndexExp* exp) override;
+
+
+    int getTypeSize(const string& t);
+    string emitLValueAddress(Exp* lhs);
+
 };
 
 
 struct StructInfo {
-    std::vector<std::string> fieldOrder;
-    std::unordered_map<std::string,int> fieldOffset;
-    std::unordered_map<std::string,std::string> fieldType;
+    vector<string> fieldOrder;
+    unordered_map<string,int> fieldOffset;
+    unordered_map<string,string> fieldType;
 
     int totalSize = 0;  // tamaño en bytes del struct completo
 };

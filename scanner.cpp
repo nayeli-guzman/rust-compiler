@@ -81,7 +81,7 @@ Token* Scanner::nextToken() {
         else return new Token(Token::ID, input, first, current - first);
     }
     // Operadores
-    else if (strchr("+/-*();=<:,{}.\"", c)) {
+    else if (strchr("+/-*();=<:,{}.[]\"", c)) {
         switch (c) {
             case '<': token = new Token(Token::LT,  c); break;
             case '+': token = new Token(Token::PLUS,  c); break;
@@ -122,6 +122,8 @@ Token* Scanner::nextToken() {
             case '{': token = new Token(Token::LBRACK,c); break;
             case '}': token = new Token(Token::RBRACK,c); break;
             case '.': token = new Token(Token::DOT,c); break;
+            case '[': token = new Token(Token::LCORCH,c); break;
+            case ']': token = new Token(Token::RCORCH,c); break;
 
         }
         current++;
