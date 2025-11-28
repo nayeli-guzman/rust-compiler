@@ -30,7 +30,12 @@ Stm            ::= LetStm
 LetStm         ::= "let" [ "mut" ] Identifier ":" Type "=" CE ;
 
 AssignStm   ::= LValue "=" CE ;
-LValue      ::= Identifier { "." Identifier } ;
+
+LValue      ::= Identifier { LValueSuffix } ;
+
+LValueSuffix ::= "." Identifier
+               | "[" CE "]" ;
+
 
 PrintStm       ::= "println!" "(" "{}" "," CE ")" ;
 ReturnStm      ::= "return" "(" CE ")" ;
@@ -43,7 +48,11 @@ BE             ::= E { ("+" | "-") E } ;
 E              ::= T { ("*" | "/") T } ;
 T              ::= F [ "^" F ] ;
 
-F              ::= Primary { "." Identifier } ;
+F              ::= Primary { FSuffix } ;
+
+FSuffix        ::= "." Identifier
+                 | "[" CE "]" ;
+
 
 Primary        ::= Number
                  | "true"
@@ -51,13 +60,17 @@ Primary        ::= Number
                  | "(" CE ")"
                  | Identifier
                  | Identifier "(" [ CE { "," CE } ] ")"
-                 | Identifier "{" [ FieldInitList ] "}" ;
+                 | Identifier "{" [ FieldInitList ] "}"
+                 | "[" [ CE { "," CE } ] "]" ;
+
 
 FieldInitList  ::= FieldInit { "," FieldInit } ;
 FieldInit      ::= Identifier ":" CE ;
 
+Type           ::= BaseType
+                 | "[" Type ";" Number "]" ;
 
-Type           ::= Identifier ;
+BaseType       ::= Identifier ;
 
 Identifier     ::= Letter { Letter | Digit | "_" } ;
 Number         ::= Digit { Digit } ;
