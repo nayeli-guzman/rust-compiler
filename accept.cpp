@@ -88,3 +88,12 @@ int IndexExp::accept(Visitor* visitor){
     return visitor->visit(this);
 }
 
+int StringExp::accept(Visitor* visitor){
+    return visitor->visit(this);
+}
+
+int FcallStm::accept(Visitor* visitor){
+    return visitor->visit(this);
+}
+
+

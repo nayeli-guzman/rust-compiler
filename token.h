@@ -51,7 +51,8 @@ public:
         DOT,
         STRUCT,
         RCORCH,  // ]
-        LCORCH   // [
+        LCORCH,   // [
+        STRING
     };
 
     // Atributos

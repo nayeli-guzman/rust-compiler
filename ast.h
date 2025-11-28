@@ -242,5 +242,17 @@ struct ArrayLitExp : public Exp {
     int accept(Visitor* v);
 };
 
+struct StringExp : public Exp {
+    string value;
+    StringExp(const std::string& v) : value(v) {}
+    int accept(Visitor* v) override;
+};
+
+struct FcallStm : public Stm {
+    FcallExp* call;          
+    FcallStm(FcallExp* c) : call(c) {}
+    int accept(Visitor* v) override;
+};
+
 
 #endif // AST_H

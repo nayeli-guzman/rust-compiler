@@ -47,8 +47,11 @@ public:
     virtual int visit(FieldAccessExp* ) = 0;
     virtual int visit(StructField* ) = 0;
     virtual int visit(StructDec* ) = 0;
+    virtual int visit(FcallStm* ) = 0;
 
     virtual int visit(IndexExp* ) = 0;
+    virtual int visit(StringExp* exp) = 0;
+
 };
 
 
@@ -89,14 +92,14 @@ public:
     int visit(FunDec* fd) override;
     int visit(ArrayLitExp* fd) override;
 
-
     int visit(StructLitExp* ) override;
     int visit(FieldAccessExp* ) override;
     int visit(StructField* ) override;
     int visit(StructDec* ) override;
+    int visit(StringExp* ) override;
+    int visit(FcallStm* ) override;
 
     int visit(IndexExp* exp) override;
-
 
     int getTypeSize(const string& t);
     string emitLValueAddress(Exp* lhs);

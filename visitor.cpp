@@ -9,6 +9,8 @@ using namespace std;
 string g_lastType; // Global to track type of last evaluated expression
 unordered_map<string, StructInfo> structTable; // Definition of structTable
 
+static unordered_map<string, string> g_stringLabels;   
+static int g_nextStringId = 0;
 // --- helpers ---
 
 static bool isArrayType(const std::string& t) {
@@ -42,6 +44,30 @@ int GenCodeVisitor::getTypeSize(const string& t) {
     return 8;
 }
 
+static string makeAsmString(const string& s) {
+    string out;
+    for (char c : s) {
+        switch (c) {
+            case '\\': out += "\\\\"; break;
+            case '\"': out += "\\\""; break;
+            case '\n': out += "\\n";  break;
+            case '\t': out += "\\t";  break;
+            default:   out.push_back(c); break;
+        }
+    }
+    return out;
+}
+
+static string getStringLabel(const string& value) {
+    auto it = g_stringLabels.find(value);
+    if (it != g_stringLabels.end()) return it->second;
+
+    string lbl = ".LC_str" + to_string(g_nextStringId++);
+    g_stringLabels[value] = lbl;
+    return lbl;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 int GenCodeVisitor::getStructSize(string structName) {
@@ -71,6 +97,16 @@ int GenCodeVisitor::visit(Program* program) {
         dec->accept(this);
     }
 
+    if (!g_stringLabels.empty()) {
+        out << ".section .rodata\n";
+        for (auto &p : g_stringLabels) {
+            const string &val = p.first;
+            const string &lbl = p.second;
+            out << lbl << ":\n";
+            out << " .string \"" << makeAsmString(val) << "\"\n";
+        }
+    }
+
     out << ".section .note.GNU-stack,\"\",@progbits"<<endl;
     return 0;
 }
@@ -93,7 +129,8 @@ int GenCodeVisitor::visit(NumberExp* exp) {
     } else if (countStruct) {
         offset = offset - 8;
     } else {
-        out << " movq $" << exp->value << ", %rax"<<endl;
+        out << " movq $" << exp->value << ", %rax" << endl;
+        g_lastType = "i64";   
     }
     return 0;
 }
@@ -354,14 +391,22 @@ int GenCodeVisitor::visit(AssignStm* stm) {
 }
 
 int GenCodeVisitor::visit(PrintStm* stm) {
-    stm->e->accept(this);
-    out <<
-        " movq %rax, %rsi\n"
-        " leaq print_fmt(%rip), %rdi\n"
-        " movl $0, %eax\n"
-        " call printf@PLT\n";
-            return 0;
+    stm->e->accept(this);       // deja valor en %rax y setea g_lastType
+
+    out << " movq %rax, %rsi\n";
+
+    if (g_lastType == "String") {
+        out << " leaq print_fmt_str(%rip), %rdi\n";
+    } else {
+        // por defecto, tratamos como entero (i64)
+        out << " leaq print_fmt(%rip), %rdi\n";
+    }
+
+    out << " movl $0, %eax\n";
+    out << " call printf@PLT\n";
+    return 0;
 }
+
 
 int GenCodeVisitor::visit(Body* b) {
     for (auto s : b->StmList)
@@ -773,5 +818,30 @@ string GenCodeVisitor::emitLValueAddress(Exp* lhs) {
 
     // No debería pasar en un LValue válido
     throw runtime_error("emitLValueAddress: LHS no es un lvalue válido");
+}
+
+int GenCodeVisitor::visit(StringExp* exp) {
+    // Obtener/crear label para este literal
+    string lbl = getStringLabel(exp->value);
+
+    if (structVar) {
+        // Estamos inicializando una global: static S: String = "hola";
+        // En .data queremos guardar un puntero al literal.
+        out << " .quad " << lbl << "\n";
+    } else {
+        // Expresión normal: resultado en %rax = puntero al literal
+        out << " leaq " << lbl << "(%rip), %rax\n";
+    }
+
+    g_lastType = "String";  
+    return 0;
+}
+
+
+int GenCodeVisitor::visit(FcallStm* stm) {
+    // Simplemente generamos el código de la llamada
+    stm->call->accept(this);
+    // ignoramos el valor de retorno (si lo hay)
+    return 0;
 }
 

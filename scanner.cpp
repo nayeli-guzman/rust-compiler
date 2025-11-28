@@ -80,8 +80,61 @@ Token* Scanner::nextToken() {
 
         else return new Token(Token::ID, input, first, current - first);
     }
+        // --- Strings y el formato "{}" de println! ---
+    else if (c == '"') {
+        // Caso especial: el literal "{}" de println!("{}", expr)
+        if (current + 3 < input.length() &&
+            input[current+1] == '{' &&
+            input[current+2] == '}' &&
+            input[current+3] == '"') {
+
+            // token PRINT_NUM para "{}"
+            token = new Token(Token::PRINT_NUM, input, first, 4);
+            current += 4; // consumimos: " { } "
+        }
+        else {
+            // String normal: "hola", "foo\nbar", etc.
+            current++; // saltar la comilla inicial
+            string lexema;
+
+            while (current < input.length() && input[current] != '"') {
+                char ch = input[current];
+
+                if (ch == '\\') {
+                    // escape: \n, \t, \", 
+                    if (current + 1 >= input.length()) {
+                        return new Token(Token::ERR, ch);
+                    }
+                    char esc = input[++current];
+                    switch (esc) {
+                        case 'n':  lexema.push_back('\n'); break;
+                        case 't':  lexema.push_back('\t'); break;
+                        case '\\': lexema.push_back('\\'); break;
+                        case '"':  lexema.push_back('"');  break;
+                        default:
+                            lexema.push_back(esc);
+                            break;
+                    }
+                    current++;
+                } else {
+                    lexema.push_back(ch);
+                    current++;
+                }
+            }
+
+            if (current >= input.length()) {
+                return new Token(Token::ERR, '"');
+            }
+
+            current++; // consumir comilla final
+
+            token = new Token(Token::STRING, input, first, current + 1 - first);
+
+            // token = new Token(Token::STRING, lexema);
+        }
+    }
     // Operadores
-    else if (strchr("+/-*();=<:,{}.[]\"", c)) {
+    else if (strchr("+/-*();=<:,{}.[]", c)) {
         switch (c) {
             case '<': token = new Token(Token::LT,  c); break;
             case '+': token = new Token(Token::PLUS,  c); break;
@@ -105,13 +158,13 @@ Token* Scanner::nextToken() {
                 token = new Token(Token::MUL,   c);
             }
             break;
-            case '"':
-            if (input.substr(current+1, 3) == "{}\"") {
-                current = current + 3;
-                token = new Token(Token::PRINT_NUM, input, first, current + 1 - first);
+            // case '"':
+            // if (input.substr(current+1, 3) == "{}\"") {
+            //     current = current + 3;
+            //     token = new Token(Token::PRINT_NUM, input, first, current + 1 - first);
 
-            } else {}
-            break;
+            // } else {}
+            // break;
             case '/': token = new Token(Token::DIV,   c); break;
             case '(': token = new Token(Token::LPAREN,c); break;
             case ')': token = new Token(Token::RPAREN,c); break;
