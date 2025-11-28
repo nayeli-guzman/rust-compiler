@@ -72,7 +72,15 @@ public:
     bool structVar = false;
     bool countStruct = false;
     string nombreFuncion;
-    
+
+    std::string currentFunctionReturnType = "void";  
+    int retornoOffset = 0; 
+
+    unordered_map<string, string> funcReturnTypes;  
+
+    string returnTypeOfFunction(const string& name) {
+        return funcReturnTypes[name];
+    }
     int getStructSize(string structName); // Helper
 
     int visit(BinaryExp* exp) override;

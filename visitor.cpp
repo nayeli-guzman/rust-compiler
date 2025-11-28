@@ -440,10 +440,50 @@ int GenCodeVisitor::visit(WhileStm* stm) {
 }
 
 int GenCodeVisitor::visit(ReturnStm* stm) {
-    stm->e->accept(this);
-    out << " jmp .end_"<<nombreFuncion << endl;
+    std::string retType = currentFunctionReturnType;
+
+    // Caso normal (no array): evalúo y salto al epílogo
+    if (!isArrayType(retType)) {
+        stm->e->accept(this);              // %rax = valor escalar
+        out << " jmp .end_" << nombreFuncion << "\n";
+        return 0;
+    }
+
+    // ---- Caso retorno de array ----
+    std::string elemType;
+    int len = 0;
+    parseArrayType(retType, elemType, len);
+    int elemSize  = getTypeSize(elemType);
+    int totalSize = getTypeSize(retType);  // len * elemSize
+
+    // ¿Es un literal [ ... ] ?
+    if (auto lit = dynamic_cast<ArrayLitExp*>(stm->e)) {
+        // %rdi ya tiene el puntero al buffer de retorno
+        for (int i = 0; i < len; ++i) {
+            if (i < (int)lit->elems.size()) {
+                lit->elems[i]->accept(this);   // %rax = valor del elemento i
+            } else {
+                out << " movq $0, %rax\n";     
+            }
+            int off = i * elemSize;
+            out << " movq %rax, " << off << "(%rdi)\n";
+        }
+        // devolver al caller el puntero al buffer
+        out << " movq %rdi, %rax\n";
+    } else {
+        // Caso general: la expresión deja en %rax un puntero al array fuente
+        stm->e->accept(this);          // %rax = src
+        out << " movq %rax, %rsi\n";   // src
+        // dst = %rdi (ya viene del caller)
+        out << " movq $" << (totalSize / 8) << ", %rcx\n";
+        out << " rep movsq\n";
+        out << " movq %rdi, %rax\n";   // retorno = puntero al buffer
+    }
+
+    out << " jmp .end_" << nombreFuncion << "\n";
     return 0;
 }
+
 
 int GenCodeVisitor::visit(LetStm* exp) {
     // registrar tipo
@@ -568,9 +608,11 @@ int GenCodeVisitor::visit(LetStm* exp) {
             }
         }
         // ---- CASO: elemento ESCALAR ----
-        else {
+    else {
+        if (lit) {
+            // caso literal [1,2,3]
             for (int i = 0; i < len; ++i) {
-                if (lit && i < (int)lit->elems.size()) {
+                if (i < (int)lit->elems.size()) {
                     lit->elems[i]->accept(this);   // %rax = valor del elemento
                 } else {
                     out << " movq $0, %rax\n";     // padding con 0
@@ -578,10 +620,20 @@ int GenCodeVisitor::visit(LetStm* exp) {
                 int off = i * elemSize;
                 out << " movq %rax, " << off << "(%rcx)\n";
             }
+        } else {
+            // caso general: RHS es, por ejemplo, build()
+            // asumimos que exp->e deja en %rax un puntero al array fuente
+            exp->e->accept(this);              // %rax = src (puntero)
+            out << " movq %rax, %rsi\n";       // src
+            out << " movq %rcx, %rdi\n";       // dst = &arr (local)
+            out << " movq $" << (len * elemSize / 8) << ", %rcx\n";
+            out << " rep movsq\n";
         }
+    }
 
-        out << " movq %rcx, %rax\n";           // resultado de la expresión let
-        return 0;
+    out << " movq %rcx, %rax\n";
+    return 0;
+
     }
 
     // --- caso 3: ESCALAR normal: i64, bool, etc.
@@ -597,6 +649,9 @@ int GenCodeVisitor::visit(FunDec* f) {
     nombreFuncion = f->nombre;
 
     vector<string> argRegs = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+
+    funcReturnTypes[f->nombre] = f->tipo;
+    currentFunctionReturnType = f->tipo;  // <-- agrega esto
 
     out << ".globl " << f->nombre << endl;
     out << f->nombre <<  ":" << endl;
@@ -652,13 +707,35 @@ int GenCodeVisitor::visit(FunDec* f) {
 }
 
 int GenCodeVisitor::visit(FcallExp* exp) {
-    vector<std::string> argRegs = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
-    int size = exp->argumentos.size();
-    for (int i = 0; i < size; i++) {
-        exp->argumentos[i]->accept(this);
-        out << " mov %rax, " << argRegs[i] <<endl;
+    vector<string> argRegs = {"%rdi","%rsi","%rdx","%rcx","%r8","%r9"};
+
+    std::string retType = returnTypeOfFunction(exp->nombre);
+
+    bool returnsArray = isArrayType(retType);
+
+    // -----------------------------------------
+    // Si la función retorna array, reservar espacio
+    // -----------------------------------------
+    if (returnsArray) {
+        int size = getTypeSize(retType);
+        out << " subq $" << size << ", %rsp\n";   // reservar buffer
+        out << " movq %rsp, %rdi\n";              // primer argumento = return buffer
     }
-    out << "call " << exp->nombre << endl;
+
+    // -----------------------------------------
+    // Pasar argumentos (saltando %rdi si es array)
+    // -----------------------------------------
+    int start = returnsArray ? 1 : 0;
+
+    for (int i = 0; i < (int)exp->argumentos.size(); i++) {
+        exp->argumentos[i]->accept(this);  // %rax = valor
+        out << " movq %rax, " << argRegs[i + start] << "\n";
+    }
+
+    // llamada
+    out << " call " << exp->nombre << "\n";
+
+    // resultado ya está en %rax (puntero si array, valor si escalar)
     return 0;
 }
 
