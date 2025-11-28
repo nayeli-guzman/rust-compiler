@@ -234,12 +234,20 @@ Stm* Parser::parseStm() {
     Body* tb = nullptr;
     Body* fb = nullptr;
     if (check(Token::ID)) {
-        Exp* lhs = parseLValue();
-        if (!match(Token::ASSIGN)) {
-            throw runtime_error("Se esperaba '=' en la asignación");
+        // Parsear algo que empieza por ID: puede ser LValue o llamada
+        Exp* e0 = parseF();   // usa Primary + FSuffix (., [ ])
+
+        // ¿Es asignación?  LValue "=" CE
+        if (match(Token::ASSIGN)) {
+            Exp* rhs = parseCE();
+            return new AssignStm(e0, rhs);
         }
-        e = parseCE();
-        return new AssignStm(lhs, e);
+
+        // No hubo "=", si esto es una llamada a función, lo tomamos como statement
+        if (auto call = dynamic_cast<FcallExp*>(e0)) {
+            return new FcallStm(call);
+        }
+        throw runtime_error("Se esperaba '=' en la asignación o una llamada a función");
     }
     else if (match(Token::LET)) {
         bool mut = false;
@@ -389,6 +397,9 @@ Exp* Parser::parsePrimary() {
     string nom;
     if (match(Token::NUM)) {
         return new NumberExp(stoi(previous->text));
+    }
+    else if (match(Token::STRING)) { 
+        return new StringExp(previous->text);
     }
     else if (match(Token::TRUE)) {
         return new NumberExp(1);

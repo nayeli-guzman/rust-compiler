@@ -21,11 +21,14 @@ Param          ::= Identifier ":" Type ;
 Block          ::= "{" { Stm [ ";" ] } "}" ;
 
 Stm            ::= LetStm
-                 | AssignStm
-                 | PrintStm
-                 | ReturnStm
-                 | IfStm
-                 | WhileStm ;
+                | AssignStm
+                | PrintStm
+                | ReturnStm
+                | IfStm
+                | WhileStm
+                | CallStm ;
+
+CallStm ::= Identifier "(" [ CE { "," CE } ] ")" ;
 
 LetStm         ::= "let" [ "mut" ] Identifier ":" Type "=" CE ;
 
@@ -53,8 +56,8 @@ F              ::= Primary { FSuffix } ;
 FSuffix        ::= "." Identifier
                  | "[" CE "]" ;
 
-
 Primary        ::= Number
+                 | StringLiteral          
                  | "true"
                  | "false"
                  | "(" CE ")"
@@ -63,17 +66,24 @@ Primary        ::= Number
                  | Identifier "{" [ FieldInitList ] "}"
                  | "[" [ CE { "," CE } ] "]" ;
 
-
 FieldInitList  ::= FieldInit { "," FieldInit } ;
 FieldInit      ::= Identifier ":" CE ;
 
 Type           ::= BaseType
                  | "[" Type ";" Number "]" ;
 
-BaseType       ::= Identifier ;
+BaseType       ::= Identifier ;   (* i64, bool, String, etc. *)
 
 Identifier     ::= Letter { Letter | Digit | "_" } ;
 Number         ::= Digit { Digit } ;
 Letter         ::= "A" | ... | "Z" | "a" | ... | "z" ;
 Digit          ::= "0" | "1" | "2" | "3" | "4"
                  | "5" | "6" | "7" | "8" | "9" ;
+
+StringLiteral  ::= "\"" { StringChar } "\"" ;
+
+StringChar     ::= /* cualquier carácter excepto comillas dobles y salto de línea */
+                 | "\\" Escaped ;
+
+Escaped        ::= "\"" | "\\" | "n" | "t" ;
+
