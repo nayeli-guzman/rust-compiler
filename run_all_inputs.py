@@ -17,7 +17,7 @@ if result.returncode != 0:
 print("Compilación exitosa")
 
 # Ejecutar
-input_dir = "arrays-inputs"
+input_dir = "return-inputs"
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
 
