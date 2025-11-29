@@ -186,7 +186,7 @@ void Parser::parseMethod(ImplDec* impl) {
     match(Token::LPAREN);       // '('
 
     // "self"
-    match(Token::SELF);         // necesitas Token::SELF en el scanner
+    match(Token::SELF);         
 
     match(Token::COMA);         // ','
 
@@ -206,7 +206,7 @@ void Parser::parseMethod(ImplDec* impl) {
 
     // Block
     match(Token::LBRACK);       // '{'
-    impl->body = parseBody();   // ya lo tienes implementado
+    impl->body = parseBody();   
     match(Token::RBRACK);       // '}'
     match(Token::RBRACK);       // '}'
 }
@@ -360,7 +360,7 @@ Stm* Parser::parseStm() {
         // Parsear algo que empieza por ID: puede ser LValue o llamada
             cout << "Es una etré" << endl;
 
-        Exp* e0 = parseF();   // usa Primary + FSuffix (., [ ])
+        Exp* e0 = parseF();   // Primary + FSuffix (., [ ])
             cout << "Es una asignación2" << endl;
 
         // ¿Es asignación?  LValue "=" CE
@@ -435,12 +435,12 @@ Stm* Parser::parseStm() {
         e = parseCE();
         match(Token::RPAREN);
         if (!match(Token::LBRACK)) {
-            cout << "Error: se esperaba '{' después de la expresión." << endl;
+            cout << "Error: se esperaba '{' después de la expresión" << endl;
             exit(1);
         }
         tb = parseBody();
         if (!match(Token::RBRACK)) {
-            cout << "Error: se esperaba '}' al final de la declaración." << endl;
+            cout << "Error: se esperaba '}' al final de la declaración" << endl;
             exit(1);
         }
         a = new WhileStm(e, tb);
