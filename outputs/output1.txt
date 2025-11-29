@@ -4,54 +4,149 @@ TOKEN(ID, "main")
 TOKEN(LPAREN, "(")
 TOKEN(RPAREN, ")")
 TOKEN(LBRACK, "{")
+Es un BODY
+Es una SSAS
 TOKEN(LET, "let")
-TOKEN(ID, "saludo")
+TOKEN(ID, "a")
 TOKEN(COLON, ":")
-TOKEN(ID, "String")
+TOKEN(ID, "i64")
 TOKEN(ASSIGN, "=")
-
+TOKEN(NUM, "10")
 TOKEN(SEMICOL, ";")
+Es una SSAS
 TOKEN(LET, "let")
-TOKEN(ID, "nombre")
+TOKEN(ID, "b")
 TOKEN(COLON, ":")
-TOKEN(ID, "String")
+TOKEN(ID, "i64")
 TOKEN(ASSIGN, "=")
-
+TOKEN(NUM, "20")
 TOKEN(SEMICOL, ";")
+Es una SSAS
+TOKEN(LET, "let")
+TOKEN(ID, "c")
+TOKEN(COLON, ":")
+TOKEN(ID, "i64")
+TOKEN(ASSIGN, "=")
+TOKEN(NUM, "30")
+TOKEN(SEMICOL, ";")
+Es una SSAS
+TOKEN(LET, "let")
+TOKEN(ID, "d")
+TOKEN(COLON, ":")
+TOKEN(ID, "i64")
+TOKEN(ASSIGN, "=")
+TOKEN(ID, "a")
+TOKEN(PLUS, "+")
+TOKEN(ID, "b")
+TOKEN(SEMICOL, ";")
+Es una SSAS
+TOKEN(LET, "let")
+TOKEN(ID, "e")
+TOKEN(COLON, ":")
+TOKEN(ID, "i64")
+TOKEN(ASSIGN, "=")
+TOKEN(ID, "d")
+TOKEN(PLUS, "+")
+TOKEN(ID, "c")
+TOKEN(SEMICOL, ";")
+Es una SSAS
 TOKEN(PRINT, "println!")
 TOKEN(LPAREN, "(")
 TOKEN(PRINT_NUM, ""{}"")
 TOKEN(COMA, ",")
-
+TOKEN(ID, "e")
 TOKEN(RPAREN, ")")
 TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-TOKEN(ID, "saludo")
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-TOKEN(ID, "nombre")
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
+Es una SSAS
 TOKEN(RETURN, "return")
 TOKEN(LPAREN, "(")
 TOKEN(NUM, "0")
 TOKEN(RPAREN, ")")
+TOKEN(SEMICOL, ";")
 TOKEN(RBRACK, "}")
 Parser exitoso
-Generando codigo ensamblador en string-inputs/input-1.s
+Generando codigo ensamblador en peephole-inputs/input-1-w.s
+===== ASM RAW =====
+.data
+print_fmt: 
+.string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
+.text
+.globl main
+main:
+ pushq %rbp
+ movq %rsp, %rbp
+ subq $48, %rsp
+ movq $10, %rax
+ movq %rax, -8(%rbp)
+ movq $20, %rax
+ movq %rax, -16(%rbp)
+ movq $30, %rax
+ movq %rax, -24(%rbp)
+ movq -8(%rbp), %rax
+ pushq %rax
+ movq -16(%rbp), %rax
+ movq %rax, %rcx
+ popq %rax
+ addq %rcx, %rax
+ movq %rax, -32(%rbp)
+ movq -32(%rbp), %rax
+ pushq %rax
+ movq -24(%rbp), %rax
+ movq %rax, %rcx
+ popq %rax
+ addq %rcx, %rax
+ movq %rax, -40(%rbp)
+ movq -40(%rbp), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ movq $0, %rax
+ jmp .end_main
+.end_main:
+leave
+ret
+.section .note.GNU-stack,"",@progbits
+
+===== ASM OPT =====
+.data
+print_fmt: 
+.string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
+.text
+.globl main
+main:
+ pushq %rbp
+ movq %rsp, %rbp
+ subq $48, %rsp
+ movq $10, -8(%rbp)
+ movq $20, -16(%rbp)
+ movq $30, -24(%rbp)
+ pushq -8(%rbp)
+ movq -16(%rbp), %rax
+ movq %rax, %rcx
+ popq %rax
+ addq %rcx, %rax
+ movq %rax, -32(%rbp)
+ pushq -32(%rbp)
+ movq -24(%rbp), %rax
+ movq %rax, %rcx
+ popq %rax
+ addq %rcx, %rax
+ movq %rax, -40(%rbp)
+ movq -40(%rbp), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ movq $0, %rax
+ jmp .end_main
+.end_main:
+leave
+ret
+.section .note.GNU-stack,"",@progbits
 
 === STDERR ===

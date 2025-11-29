@@ -13,6 +13,10 @@ Token::Token(Type type)
 Token::Token(Type type, char c) 
     : type(type), text(string(1, c)) { }
 
+Token::Token(Type type, string c) 
+    : type(type), text(c) { }
+
+
 Token::Token(Type type, const string& source, int first, int last) 
     : type(type), text(source.substr(first, last)) { }
 

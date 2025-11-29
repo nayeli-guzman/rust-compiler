@@ -45,7 +45,9 @@ main:
  imulq $8, %rax
  addq %rax, %rdx
  movq %rdx, %rcx
+ pushq %rcx
  movq $100, %rax
+ popq %rcx
  movq %rax, (%rcx)
  leaq -40(%rbp), %rax
  movq %rax, %rcx

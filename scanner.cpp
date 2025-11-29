@@ -128,9 +128,9 @@ Token* Scanner::nextToken() {
 
             current++; // consumir comilla final
 
-            token = new Token(Token::STRING, input, first, current + 1 - first);
+            // token = new Token(Token::STRING, input, first, current + 1 - first);
 
-            // token = new Token(Token::STRING, lexema);
+            token = new Token(Token::STRING, lexema);
         }
     }
     // Operadores

@@ -19,6 +19,7 @@
         "array": "cpp",
         "complex": "cpp",
         "type_traits": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "fstream": "cpp"
     }
 }

@@ -1,6 +1,8 @@
 .data
 print_fmt: 
 .string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
 TITULO:
  .quad .LC_str0
 .text
@@ -37,12 +39,12 @@ main:
 leave
 ret
 .section .rodata
-.LC_str3:
- .string "\"adios\")"
 .LC_str2:
- .string "\"---- Programa 2 ----\")"
+ .string "---- Programa 2 ----"
 .LC_str1:
- .string "\"linea local\";"
+ .string "linea local"
+.LC_str3:
+ .string "adios"
 .LC_str0:
- .string "\"Titulo global\";"
+ .string "Titulo global"
 .section .note.GNU-stack,"",@progbits

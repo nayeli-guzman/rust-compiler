@@ -1,83 +1,226 @@
 === STDOUT ===
-TOKEN(STRUCT, "struct")
-TOKEN(ID, "Mensaje")
-TOKEN(LBRACK, "{")
-TOKEN(ID, "texto")
-TOKEN(COLON, ":")
-TOKEN(ID, "String")
-TOKEN(COMA, ",")
-TOKEN(ID, "veces")
-TOKEN(COLON, ":")
-TOKEN(ID, "i64")
-TOKEN(RBRACK, "}")
 TOKEN(FUN, "fn")
 TOKEN(ID, "main")
 TOKEN(LPAREN, "(")
 TOKEN(RPAREN, ")")
 TOKEN(LBRACK, "{")
+Es un BODY
+Es una SSAS
 TOKEN(LET, "let")
 TOKEN(MUT, "mut")
-TOKEN(ID, "msg")
+TOKEN(ID, "a")
 TOKEN(COLON, ":")
-TOKEN(ID, "Mensaje")
+TOKEN(LCORCH, "[")
+TOKEN(ID, "i64")
+TOKEN(SEMICOL, ";")
+TOKEN(NUM, "5")
+TOKEN(RCORCH, "]")
 TOKEN(ASSIGN, "=")
-TOKEN(ID, "Mensaje")
-TOKEN(LBRACK, "{")
-TOKEN(ID, "texto")
-TOKEN(COLON, ":")
-
+TOKEN(LCORCH, "[")
+TOKEN(NUM, "1")
 TOKEN(COMA, ",")
-TOKEN(ID, "veces")
-TOKEN(COLON, ":")
+TOKEN(NUM, "2")
+TOKEN(COMA, ",")
 TOKEN(NUM, "3")
-TOKEN(RBRACK, "}")
+TOKEN(COMA, ",")
+TOKEN(NUM, "4")
+TOKEN(COMA, ",")
+TOKEN(NUM, "5")
+TOKEN(RCORCH, "]")
 TOKEN(SEMICOL, ";")
+Es una SSAS
 TOKEN(PRINT, "println!")
 TOKEN(LPAREN, "(")
 TOKEN(PRINT_NUM, ""{}"")
 TOKEN(COMA, ",")
-
+TOKEN(ID, "a")
+TOKEN(LCORCH, "[")
+TOKEN(NUM, "0")
+TOKEN(RCORCH, "]")
 TOKEN(RPAREN, ")")
 TOKEN(SEMICOL, ";")
+Es una SSAS
 TOKEN(PRINT, "println!")
 TOKEN(LPAREN, "(")
 TOKEN(PRINT_NUM, ""{}"")
 TOKEN(COMA, ",")
-TOKEN(ID, "msg")
-TOKEN(DOT, ".")
-TOKEN(ID, "texto")
+TOKEN(ID, "a")
+TOKEN(LCORCH, "[")
+TOKEN(NUM, "3")
+TOKEN(RCORCH, "]")
 TOKEN(RPAREN, ")")
 TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-TOKEN(ID, "msg")
-TOKEN(DOT, ".")
-TOKEN(ID, "veces")
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(ID, "msg")
-TOKEN(DOT, ".")
-TOKEN(ID, "texto")
+Es una SSAS
+Es una etré
+TOKEN(ID, "a")
+TOKEN(LCORCH, "[")
+TOKEN(NUM, "1")
+TOKEN(RCORCH, "]")
+Es una asignación2
 TOKEN(ASSIGN, "=")
-
+Es una asignación
+TOKEN(NUM, "100")
 TOKEN(SEMICOL, ";")
+Es una SSAS
 TOKEN(PRINT, "println!")
 TOKEN(LPAREN, "(")
 TOKEN(PRINT_NUM, ""{}"")
 TOKEN(COMA, ",")
-TOKEN(ID, "msg")
-TOKEN(DOT, ".")
-TOKEN(ID, "texto")
+TOKEN(ID, "a")
+TOKEN(LCORCH, "[")
+TOKEN(NUM, "1")
+TOKEN(RCORCH, "]")
 TOKEN(RPAREN, ")")
 TOKEN(SEMICOL, ";")
+Es una SSAS
 TOKEN(RETURN, "return")
 TOKEN(LPAREN, "(")
 TOKEN(NUM, "0")
 TOKEN(RPAREN, ")")
+TOKEN(SEMICOL, ";")
 TOKEN(RBRACK, "}")
 Parser exitoso
-Generando codigo ensamblador en string-inputs/input-3.s
+Generando codigo ensamblador en peephole-inputs/input-3-w.s
+===== ASM RAW =====
+.data
+print_fmt: 
+.string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
+.text
+.globl main
+main:
+ pushq %rbp
+ movq %rsp, %rbp
+ subq $48, %rsp
+ leaq -40(%rbp), %rcx
+ movq $1, %rax
+ movq %rax, 0(%rcx)
+ movq $2, %rax
+ movq %rax, 8(%rcx)
+ movq $3, %rax
+ movq %rax, 16(%rcx)
+ movq $4, %rax
+ movq %rax, 24(%rcx)
+ movq $5, %rax
+ movq %rax, 32(%rcx)
+ movq %rcx, %rax
+ leaq -40(%rbp), %rax
+ movq %rax, %rcx
+ movq $0, %rax
+ imulq $8, %rax
+ addq %rax, %rcx
+ movq (%rcx), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ leaq -40(%rbp), %rax
+ movq %rax, %rcx
+ movq $3, %rax
+ imulq $8, %rax
+ addq %rax, %rcx
+ movq (%rcx), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ leaq -40(%rbp), %rcx
+ movq %rcx, %rdx
+ movq $1, %rax
+ imulq $8, %rax
+ addq %rax, %rdx
+ movq %rdx, %rcx
+ pushq %rcx
+ movq $100, %rax
+ popq %rcx
+ movq %rax, (%rcx)
+ leaq -40(%rbp), %rax
+ movq %rax, %rcx
+ movq $1, %rax
+ imulq $8, %rax
+ addq %rax, %rcx
+ movq (%rcx), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ movq $0, %rax
+ jmp .end_main
+.end_main:
+leave
+ret
+.section .note.GNU-stack,"",@progbits
+
+===== ASM OPT =====
+.data
+print_fmt: 
+.string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
+.text
+.globl main
+main:
+ pushq %rbp
+ movq %rsp, %rbp
+ subq $48, %rsp
+ leaq -40(%rbp), %rcx
+ movq $1, %rax
+ movq %rax, 0(%rcx)
+ movq $2, %rax
+ movq %rax, 8(%rcx)
+ movq $3, %rax
+ movq %rax, 16(%rcx)
+ movq $4, %rax
+ movq %rax, 24(%rcx)
+ movq $5, %rax
+ movq %rax, 32(%rcx)
+ movq %rcx, %rax
+ leaq -40(%rbp), %rax
+ movq %rax, %rcx
+ movq $0, %rax
+ imulq $8, %rax
+ addq %rax, %rcx
+ movq (%rcx), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ leaq -40(%rbp), %rax
+ movq %rax, %rcx
+ movq $3, %rax
+ imulq $8, %rax
+ addq %rax, %rcx
+ movq (%rcx), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ leaq -40(%rbp), %rcx
+ movq %rcx, %rdx
+ movq $1, %rax
+ imulq $8, %rax
+ addq %rax, %rdx
+ movq %rdx, %rcx
+ pushq %rcx
+ movq $100, %rax
+ popq %rcx
+ movq %rax, (%rcx)
+ leaq -40(%rbp), %rax
+ movq %rax, %rcx
+ movq $1, %rax
+ imulq $8, %rax
+ addq %rax, %rcx
+ movq (%rcx), %rax
+ movq %rax, %rsi
+ leaq print_fmt(%rip), %rdi
+ movl $0, %eax
+ call printf@PLT
+ movq $0, %rax
+ jmp .end_main
+.end_main:
+leave
+ret
+.section .note.GNU-stack,"",@progbits
 
 === STDERR ===

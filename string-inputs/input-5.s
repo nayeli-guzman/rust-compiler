@@ -1,6 +1,8 @@
 .data
 print_fmt: 
 .string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
 .text
 .globl saludar
 saludar:
@@ -94,8 +96,8 @@ main:
  movl $0, %eax
  call printf@PLT
  leaq .LC_str4(%rip), %rax
- mov %rax, %rdi
-call saludar
+ movq %rax, %rdi
+ call saludar
  leaq -32(%rbp), %rax
  movq %rax, %rcx
  movq $0, %rax
@@ -104,8 +106,8 @@ call saludar
  movq %rcx, %rax
  addq $0, %rax
  movq (%rax), %rax
- mov %rax, %rdi
-call saludar
+ movq %rax, %rdi
+ call saludar
  movq $0, %rax
  jmp .end_main
 .end_main:
@@ -113,13 +115,13 @@ leave
 ret
 .section .rodata
 .LC_str4:
- .string "\"desde funcion\")"
+ .string "desde funcion"
 .LC_str3:
- .string "\"---- Programa 5 ----\")"
-.LC_str2:
- .string "\"Luis\","
+ .string "---- Programa 5 ----"
 .LC_str1:
- .string "\"Ana\","
+ .string "Ana"
+.LC_str2:
+ .string "Luis"
 .LC_str0:
- .string "\"---- saludo ----\")"
+ .string "---- saludo ----"
 .section .note.GNU-stack,"",@progbits
