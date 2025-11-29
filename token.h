@@ -54,10 +54,13 @@ public:
         LCORCH,   // [
         STRING,
         USE,
+        OPS,
+        ADD,
+        SUB,
         IMPL,
+        FOR,
         TYPE,
-        SELF,
-        FOR
+        SELF
     };
 
     // Atributos

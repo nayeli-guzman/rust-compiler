@@ -24,6 +24,14 @@ StructField    ::= Identifier ":" Type ;
 
 GlobalVar      ::= "static" [ "mut" ] Identifier ":" Type "=" CE ";" ;
 
+ImplDec        ::= "impl" Identifier "for" Type "{" ImplItem "}" ;
+
+ImplItem       ::= TypeAlias Method ;
+
+TypeAlias      ::= "type" Identifier "=" Type ";" ;
+
+Method         ::= "fn" Identifier "(" "self"  "," Param ")" "->" Type Block ;
+
 FunDec         ::= "fn" Identifier "(" [ ParamList ] ")"
                    [ "->" Type ]
                    Block ;
