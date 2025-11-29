@@ -267,6 +267,9 @@ int GenCodeVisitor::visit(BinaryExp* exp) {
             out << " imulq %rcx, %rax\n";
             break;
         case DIV_OP:
+            out << " cqto\n";          // sign-extend RAX a RDX:RAX
+            out << " idivq %rcx\n";    // RAX = RAX / RCX
+            break;
         case POW_OP:
             out << " imulq %rcx, %rax\n";
             break;

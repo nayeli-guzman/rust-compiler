@@ -20,7 +20,8 @@ __op_div_Punto_Punto:
  movq (%rax), %rax
  movq %rax, %rcx
  popq %rax
- imulq %rcx, %rax
+ cqto
+ idivq %rcx
  leaq -32(%rbp), %rdx
  movq %rax, 0(%rdx)
  movq -8(%rbp), %rax
@@ -32,7 +33,8 @@ __op_div_Punto_Punto:
  movq (%rax), %rax
  movq %rax, %rcx
  popq %rax
- imulq %rcx, %rax
+ cqto
+ idivq %rcx
  leaq -32(%rbp), %rdx
  movq %rax, 8(%rdx)
  leaq -32(%rbp), %rax
@@ -72,7 +74,8 @@ main:
  movq $2, %rax
  movq %rax, %rcx
  popq %rax
- imulq %rcx, %rax
+ cqto
+ idivq %rcx
  movq %rax, -56(%rbp)
  leaq -48(%rbp), %rcx
  pushq %rcx
