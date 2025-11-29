@@ -119,6 +119,24 @@ public:
     ~StructField();
 };
 
+struct UseDecl {
+    std::string a, b, c;  // std, ops, Add  (por ahora suficiente)
+};
+
+struct ImplDec {
+    std::string traitName;   // "Add"
+    std::string typeName;    // "Punto"
+    // TypeAlias:
+    std::string outputName;  // "Output"
+    std::string outputType;  // "Punto"
+    // Method:
+    std::string methodName;          // "add"
+    std::string paramName;           // "other"
+    std::string paramType;           // "Punto"
+    std::string returnType;          // "Punto"
+    Body*       body;                // cuerpo del método
+};
+
 // ------------------ Stm -------------------
 
 class IfStm: public Stm {
@@ -200,9 +218,11 @@ public:
 
 class Program{
 public:
+    list<UseDecl*>  ulist; 
     list<GlobalVar*> vdlist;
     list<FunDec*> fdlist;
     list<StructDec*> sdlist;
+    list<ImplDec*>  impls;
 
     Program(){};
     ~Program(){};
@@ -253,6 +273,7 @@ struct FcallStm : public Stm {
     FcallStm(FcallExp* c) : call(c) {}
     int accept(Visitor* v) override;
 };
+
 
 
 #endif // AST_H

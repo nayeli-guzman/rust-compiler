@@ -20,6 +20,9 @@ public:
     GlobalVar* parseGlobalVar();
     StructDec* parseStructDec();
     StructField* parseStructField();
+    UseDecl* parseUseDecl();
+    ImplDec* parseImplDec();
+    void parseTypeAlias(ImplDec* );
     Stm* parseStm();
     Exp* parseCE();
     Exp* parseBE();
@@ -30,6 +33,8 @@ public:
     string parseLValueName();
     string parseType();
     Exp* parseLValue();
+    void parseMethod(ImplDec* );
+
 
 };
 

@@ -60,34 +60,155 @@ bool Parser::isAtEnd() {
 Program* Parser::parseProgram() {
     Program* p = new Program();
 
-    if(check(Token::STRUCT)) {
+    // { UseDecl }
+    if (check(Token::USE)) {
+        p->ulist.push_back(parseUseDecl());
+        while (check(Token::USE)) {
+            p->ulist.push_back(parseUseDecl());
+        }
+    }
+
+    // { StructDec }
+    if (check(Token::STRUCT)) {
         p->sdlist.push_back(parseStructDec());
-        while(check(Token::STRUCT)) {
+        while (check(Token::STRUCT)) {
             p->sdlist.push_back(parseStructDec());
         }
     }
 
-    if(check(Token::STATIC)) {
+    // { GlobalVar }
+    if (check(Token::STATIC)) {
         p->vdlist.push_back(parseGlobalVar());
-        while(check(Token::STATIC)) {
+        while (check(Token::STATIC)) {
             p->vdlist.push_back(parseGlobalVar());
         }
     }
 
-    if(check(Token::FUN)) {
-        p->fdlist.push_back(parseFunDec());
-        while(check(Token::FUN)){
-                p->fdlist.push_back(parseFunDec());
-            }
+    // { ImplDec }
+    if (check(Token::IMPL)) {
+        p->impls.push_back(parseImplDec());
+        while (check(Token::IMPL)) {
+            p->impls.push_back(parseImplDec());
         }
+    }
+
+    // { FunDec }
+    if (check(Token::FUN)) {
+        p->fdlist.push_back(parseFunDec());
+        while (check(Token::FUN)) {
+            p->fdlist.push_back(parseFunDec());
+        }
+    }
     
     if (!isAtEnd()) {
         throw runtime_error("Se encontraron tokens extra después del último elemento del programa");
     }    
     
     cout << "Parser exitoso" << endl;
-    
     return p;
+}
+
+UseDecl* Parser::parseUseDecl() {
+    UseDecl* u = new UseDecl();
+
+    match(Token::USE);
+
+    // Primer identificador (std)
+    match(Token::ID);
+    u->a = previous->text;
+
+    // "::"
+    match(Token::COLON);
+    match(Token::COLON);
+
+    // Segundo identificador (ops)
+    match(Token::ID);
+    u->b = previous->text;
+
+    // "::"
+    match(Token::COLON);
+    match(Token::COLON);
+
+    // Tercer identificador (Add)
+    match(Token::ID);
+    u->c = previous->text;
+
+    match(Token::SEMICOL);   // ';'
+
+    return u;
+}
+
+ImplDec* Parser::parseImplDec() {
+    ImplDec* impl = new ImplDec();
+
+    match(Token::IMPL);
+
+    // "impl Add for Punto"
+    match(Token::ID);
+    impl->traitName = previous->text;    // "Add"
+
+    match(Token::FOR);
+
+    impl->typeName = parseType();        // "Punto"
+
+    match(Token::LBRACK);                // '{'
+
+    // TypeAlias: type Output = Punto;
+    parseTypeAlias(impl);
+
+    // Method: fn add(self, other: Punto) -> Punto { ... }
+    parseMethod(impl);
+
+    match(Token::RBRACK);                // '}'
+
+    return impl;
+}
+
+void Parser::parseTypeAlias(ImplDec* impl) {
+    match(Token::TYPE);          // "type"
+
+    match(Token::ID);            // "Output"
+    impl->outputName = previous->text;
+
+    match(Token::ASSIGN);        // '='
+
+    impl->outputType = parseType();   // "Punto"
+
+    match(Token::SEMICOL);       // ';'
+}
+
+void Parser::parseMethod(ImplDec* impl) {
+    match(Token::FUN);          // "fn"
+
+    match(Token::ID);           // "add"
+    impl->methodName = previous->text;
+
+    match(Token::LPAREN);       // '('
+
+    // "self"
+    match(Token::SELF);         
+
+    match(Token::COMA);         // ','
+
+    // Param: Identifier ":" Type  (other: Punto)
+    match(Token::ID);
+    impl->paramName = previous->text;
+
+    match(Token::COLON);
+
+    impl->paramType = parseType();   // "Punto"
+
+    match(Token::RPAREN);       // ')'
+
+    match(Token::ARROW);        // "->"
+
+    impl->returnType = parseType();  // "Punto"
+
+    // Block
+    match(Token::LBRACK);       // '{'
+    impl->body = parseBody();   
+    match(Token::RBRACK);       // '}'
+    match(Token::RBRACK);       // '}'
 }
 
 GlobalVar* Parser::parseGlobalVar(){
@@ -197,9 +318,7 @@ FunDec *Parser::parseFunDec() {
 
 Body* Parser::parseBody() {
     Body* b = new Body();
-            cout << "Es un BODY" << endl;
 
- 
     while (true) {
         if (check(Token::RBRACK)) break;
 
@@ -241,7 +360,7 @@ Stm* Parser::parseStm() {
         // Parsear algo que empieza por ID: puede ser LValue o llamada
             cout << "Es una etré" << endl;
 
-        Exp* e0 = parseF();   // usa Primary + FSuffix (., [ ])
+        Exp* e0 = parseF();   // Primary + FSuffix (., [ ])
             cout << "Es una asignación2" << endl;
 
         // ¿Es asignación?  LValue "=" CE
@@ -316,12 +435,12 @@ Stm* Parser::parseStm() {
         e = parseCE();
         match(Token::RPAREN);
         if (!match(Token::LBRACK)) {
-            cout << "Error: se esperaba '{' después de la expresión." << endl;
+            cout << "Error: se esperaba '{' después de la expresión" << endl;
             exit(1);
         }
         tb = parseBody();
         if (!match(Token::RBRACK)) {
-            cout << "Error: se esperaba '}' al final de la declaración." << endl;
+            cout << "Error: se esperaba '}' al final de la declaración" << endl;
             exit(1);
         }
         a = new WhileStm(e, tb);
@@ -490,6 +609,10 @@ Exp* Parser::parsePrimary() {
 
         match(Token::RCORCH);          // ']'
         return new ArrayLitExp(elems);
+    }
+    else if (match(Token::SELF)) {
+        std::string nom = "self";   
+        return new IdExp(nom);
     }
     else {
         throw runtime_error("Error sintáctico");

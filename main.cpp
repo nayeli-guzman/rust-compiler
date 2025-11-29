@@ -44,13 +44,13 @@ int main(int argc, const char* argv[]) {
   
     Program* program = parser.parseProgram(); 
 
-    DAGOptimizer dagOpt;
-    dagOpt.optimize(program);
+    // DAGOptimizer dagOpt;
+    // dagOpt.optimize(program);
 
     string inputFile(argv[1]);
     size_t dotPos = inputFile.find_last_of('.');
     string baseName = (dotPos == string::npos) ? inputFile : inputFile.substr(0, dotPos);
-    string outputFilename = baseName + "-w" + ".s";
+    string outputFilename = baseName  + ".s";
 
     ofstream outfile(outputFilename);
     if (!outfile.is_open()) {

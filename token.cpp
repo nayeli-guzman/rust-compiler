@@ -71,6 +71,11 @@ ostream& operator<<(ostream& outs, const Token& tok) {
         
         case Token::RCORCH:    outs << "TOKEN(RCORCH, \""    << tok.text << "\")"; break;
         case Token::LCORCH:    outs << "TOKEN(LCORCH, \""    << tok.text << "\")"; break;
+        case Token::USE:    outs << "TOKEN(USE, \""    << tok.text << "\")"; break;
+        case Token::IMPL:    outs << "TOKEN(IMPL, \""    << tok.text << "\")"; break;
+        case Token::TYPE:    outs << "TOKEN(TYPE, \""    << tok.text << "\")"; break;
+        case Token::SELF:    outs << "TOKEN(SELF, \""    << tok.text << "\")"; break;
+        case Token::FOR:    outs << "TOKEN(FOR, \""    << tok.text << "\")"; break;
 
         case Token::USE:    outs << "TOKEN(USE, \""    << tok.text << "\")"; break;
         case Token::OPS:    outs << "TOKEN(OPS, \""    << tok.text << "\")"; break;
