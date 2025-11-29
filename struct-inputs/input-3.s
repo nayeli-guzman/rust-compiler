@@ -22,7 +22,9 @@ main:
  movq %rax, 8(%rcx)
  movq %rcx, %rax
  leaq -24(%rbp), %rcx
+ pushq %rcx
  movq $1, %rax
+ popq %rcx
  movq %rax, (%rcx)
  leaq -16(%rbp), %rax
  addq $0, %rax

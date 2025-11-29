@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cctype>   // para isspace
 
-// helpers chiquitos
+// helpers 
 static std::string trim(const std::string& s) {
     size_t i = 0, j = s.size();
     while (i < j && std::isspace((unsigned char)s[i])) i++;
@@ -12,8 +12,31 @@ static std::string trim(const std::string& s) {
     return s.substr(i, j - i);
 }
 
-static bool isAddZeroRax(const std::string& line) {
-    return trim(line) == "addq $0, %rax";
+static bool isAddZeroAnyReg(const std::string& line) {
+    std::string t = trim(line);
+    const std::string prefix = "addq $0, %";
+    // matchea cosas tipo: addq $0, %rax  /  addq $0, %rcx
+    return t.rfind(prefix, 0) == 0;
+}
+
+
+// --- detectar patrón movq OFFSET(%rbp), %rax ---
+static bool parseMovMemRbpToRax(const std::string& line, std::string& mem) {
+    std::string t = trim(line); // movq -8(%rbp), %rax
+    const std::string prefix = "movq ";
+    if (t.rfind(prefix, 0) != 0) return false;
+
+    size_t comma = t.find(',');
+    if (comma == std::string::npos) return false;
+
+    std::string lhs = trim(t.substr(prefix.size(), comma - prefix.size())); // "-8(%rbp)"
+    std::string rhs = trim(t.substr(comma + 1));                            // "%rax"
+
+    if (rhs != "%rax") return false;
+    if (lhs.find("(%rbp)") == std::string::npos) return false;
+
+    mem = lhs;
+    return true;
 }
 
 static std::vector<std::string> splitLines(const std::string& text) {
@@ -52,7 +75,7 @@ static bool isPopRax(const std::string& line) {
     return t == "popq %rax";
 }
 
-// --- NUEVO: detectar patrón movq $IMM, %rax ---
+// --- detectar patrón movq $IMM, %rax ---
 static bool parseMovImmToRax(const std::string& line, std::string& imm) {
     std::string t = trim(line);
     // esperamos algo como: movq $1, %rax
@@ -71,7 +94,7 @@ static bool parseMovImmToRax(const std::string& line, std::string& imm) {
     return true;
 }
 
-// --- NUEVO: detectar patrón movq %rax, OFFSET(%rbp) ---
+// ---  detectar patrón movq %rax, OFFSET(%rbp) ---
 static bool parseMovRaxToMemRbp(const std::string& line, std::string& mem) {
     std::string t = trim(line);
     // esperamos algo como: movq %rax, -8(%rbp)
@@ -96,7 +119,7 @@ std::string PeepholeOptimizer::optimize(const std::string& asmText) {
         std::string line = in[i];
         std::string t = trim(line);
 
-        // --- REGLA NUEVA ---
+        // --- REGLA 1 ---
         // movq $IMM, %rax
         // movq %rax, OFFSET(%rbp)
         //  ==> movq $IMM, OFFSET(%rbp)
@@ -105,9 +128,23 @@ std::string PeepholeOptimizer::optimize(const std::string& asmText) {
             if (parseMovImmToRax(line, imm) &&
                 parseMovRaxToMemRbp(in[i + 1], mem)) {
 
-                // Generamos la versión combinada (con un espacio inicial para alinearse con tu estilo)
                 out.push_back(" movq $" + imm + ", " + mem);
                 i++;  // saltamos la siguiente línea porque ya la consumimos
+                continue;
+            }
+        }
+
+        // --- REGLA 2 ---
+        // movq OFFSET(%rbp), %rax
+        // pushq %rax
+        //  ==> pushq OFFSET(%rbp)
+        if (i + 1 < in.size()) {
+            std::string mem;
+            if (parseMovMemRbpToRax(line, mem) &&   // movq offset(%rbp), %rax
+                isPushRax(in[i + 1])) {             // pushq %rax
+
+                out.push_back(" pushq " + mem);
+                i++;  // consumimos también el pushq %rax
                 continue;
             }
         }
@@ -118,7 +155,7 @@ std::string PeepholeOptimizer::optimize(const std::string& asmText) {
         }
 
         // 1.5) eliminar addq $0, %rax
-        if (isAddZeroRax(line)) {
+        if (isAddZeroAnyReg(line)) {
             continue; // no hace nada, la eliminamos
         }
 
@@ -128,9 +165,10 @@ std::string PeepholeOptimizer::optimize(const std::string& asmText) {
             continue; // no agregamos ninguna de las dos
         }
 
-        // Si no matcheó ninguna regla, copiamos tal cual
+        // gg
         out.push_back(line);
     }
 
     return joinLines(out);
 }
+

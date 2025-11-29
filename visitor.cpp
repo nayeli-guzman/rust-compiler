@@ -85,6 +85,7 @@ int GenCodeVisitor::visit(Program* program) {
         dec->accept(this);
 
     out << ".data\nprint_fmt: \n.string \"%ld \\n\""<<endl;
+    out << "print_fmt_str: \n .string \"%s \\n\""<<endl;
 
     for (auto dec : program->vdlist)
         dec->accept(this);

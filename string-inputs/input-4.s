@@ -1,6 +1,8 @@
 .data
 print_fmt: 
 .string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
 .text
 .globl main
 main:
@@ -58,7 +60,9 @@ main:
  imulq $8, %rax
  addq %rax, %rdx
  movq %rdx, %rcx
+ pushq %rcx
  leaq .LC_str4(%rip), %rax
+ popq %rcx
  movq %rax, (%rcx)
  leaq -24(%rbp), %rax
  movq %rax, %rcx
@@ -76,14 +80,14 @@ main:
 leave
 ret
 .section .rodata
-.LC_str4:
- .string "\"DOS EN MAYUS\";"
 .LC_str3:
- .string "\"---- Programa 4 ----\")"
+ .string "---- Programa 4 ----"
 .LC_str2:
- .string "\"tres\"\n"
+ .string "tres"
 .LC_str1:
- .string "\"dos\","
+ .string "dos"
+.LC_str4:
+ .string "DOS EN MAYUS"
 .LC_str0:
- .string "\"uno\","
+ .string "uno"
 .section .note.GNU-stack,"",@progbits

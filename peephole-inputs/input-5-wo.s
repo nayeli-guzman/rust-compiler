@@ -116,10 +116,10 @@ ret
 .section .rodata
 .LC_str4:
  .string "desde funcion"
-.LC_str3:
- .string "---- Programa 5 ----"
 .LC_str1:
  .string "Ana"
+.LC_str3:
+ .string "---- Programa peephole ----"
 .LC_str2:
  .string "Luis"
 .LC_str0:

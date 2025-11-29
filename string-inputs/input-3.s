@@ -1,6 +1,8 @@
 .data
 print_fmt: 
 .string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
 .text
 .globl main
 main:
@@ -34,7 +36,9 @@ main:
  call printf@PLT
  leaq -16(%rbp), %rcx
  addq $0, %rcx
+ pushq %rcx
  leaq .LC_str2(%rip), %rax
+ popq %rcx
  movq %rax, (%rcx)
  leaq -16(%rbp), %rax
  addq $0, %rax
@@ -50,9 +54,9 @@ leave
 ret
 .section .rodata
 .LC_str2:
- .string "\"texto actualizado\";"
+ .string "texto actualizado"
 .LC_str1:
- .string "\"---- Programa 3 ----\")"
+ .string "---- Programa 3 ----"
 .LC_str0:
- .string "\"hola desde struct\","
+ .string "hola desde struct"
 .section .note.GNU-stack,"",@progbits

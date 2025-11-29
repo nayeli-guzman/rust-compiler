@@ -53,7 +53,6 @@ main:
  imulq $16, %rax
  addq %rax, %rcx
  movq %rcx, %rax
- addq $0, %rax
  movq (%rax), %rax
  movq %rax, %rsi
  leaq print_fmt_str(%rip), %rdi
@@ -77,7 +76,6 @@ main:
  imulq $16, %rax
  addq %rax, %rcx
  movq %rcx, %rax
- addq $0, %rax
  movq (%rax), %rax
  movq %rax, %rsi
  leaq print_fmt_str(%rip), %rdi
@@ -104,7 +102,6 @@ main:
  imulq $16, %rax
  addq %rax, %rcx
  movq %rcx, %rax
- addq $0, %rax
  movq (%rax), %rax
  movq %rax, %rdi
  call saludar
@@ -116,10 +113,10 @@ ret
 .section .rodata
 .LC_str4:
  .string "desde funcion"
-.LC_str3:
- .string "---- Programa 5 ----"
 .LC_str1:
  .string "Ana"
+.LC_str3:
+ .string "---- Programa peephole ----"
 .LC_str2:
  .string "Luis"
 .LC_str0:

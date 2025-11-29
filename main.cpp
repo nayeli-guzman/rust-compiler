@@ -12,7 +12,7 @@
 
 using namespace std;
 
-
+/*
 int main(int argc, const char* argv[]) {
     // Verificar número de argumentos
     if (argc != 2) {
@@ -48,7 +48,7 @@ int main(int argc, const char* argv[]) {
     string inputFile(argv[1]);
     size_t dotPos = inputFile.find_last_of('.');
     string baseName = (dotPos == string::npos) ? inputFile : inputFile.substr(0, dotPos);
-    string outputFilename = baseName + ".s";
+    string outputFilename = baseName + "-wo" + ".s";
 
     ofstream outfile(outputFilename);
     if (!outfile.is_open()) {
@@ -63,10 +63,10 @@ int main(int argc, const char* argv[]) {
     
     return 0;
 }
-
+*/
  
 
-/*
+
 int main(int argc, const char* argv[]) {
     // Verificar número de argumentos
     if (argc != 2) {
@@ -98,14 +98,14 @@ int main(int argc, const char* argv[]) {
     // Parsear y generar AST
     Program* program = parser.parseProgram();
 
-    DAGOptimizer dagOpt;
-    dagOpt.optimize(program);
+    // DAGOptimizer dagOpt;
+    // dagOpt.optimize(program);
 
     // Nombre de archivo de salida
     string inputFile(argv[1]);
     size_t dotPos = inputFile.find_last_of('.');
     string baseName = (dotPos == string::npos) ? inputFile : inputFile.substr(0, dotPos);
-    string outputFilename = baseName + ".s";
+    string outputFilename = baseName + "-w" + ".s";
 
     cout << "Generando codigo ensamblador en " << outputFilename << endl;
 
@@ -135,4 +135,4 @@ int main(int argc, const char* argv[]) {
     
     return 0;
 }
-*/
+

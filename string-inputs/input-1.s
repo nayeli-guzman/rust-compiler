@@ -1,6 +1,8 @@
 .data
 print_fmt: 
 .string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
 .text
 .globl main
 main:
@@ -38,11 +40,11 @@ leave
 ret
 .section .rodata
 .LC_str3:
- .string "\"fin del programa 1\")"
-.LC_str2:
- .string "\"---- Programa 1 ----\")"
+ .string "fin del programa 1"
 .LC_str1:
- .string "\"mundo\";"
+ .string "mundo"
+.LC_str2:
+ .string "---- Programa 1 ----"
 .LC_str0:
- .string "\"hola\";"
+ .string "hola"
 .section .note.GNU-stack,"",@progbits

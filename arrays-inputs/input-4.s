@@ -55,7 +55,9 @@ main:
  addq %rax, %rdx
  movq %rdx, %rcx
  addq $0, %rcx
+ pushq %rcx
  movq $999, %rax
+ popq %rcx
  movq %rax, (%rcx)
  leaq -48(%rbp), %rax
  movq %rax, %rcx
