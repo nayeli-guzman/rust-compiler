@@ -9,6 +9,7 @@
 #include "visitor.h"
 #include "peephole.h"
 #include "dag.h"   
+#include "typechecker.h"
 
 using namespace std;
 
@@ -43,6 +44,10 @@ int main(int argc, const char* argv[]) {
     // Parsear y generar AST
   
     Program* program = parser.parseProgram(); 
+
+    TypeChecker tc;
+    tc.checkProgram(program);
+
 
     // DAGOptimizer dagOpt;
     // dagOpt.optimize(program);

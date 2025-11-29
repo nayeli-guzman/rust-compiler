@@ -96,4 +96,9 @@ int FcallStm::accept(Visitor* visitor){
     return visitor->visit(this);
 }
 
+int ImplDec::accept(Visitor* visitor){
+    return visitor->visit(this);
+}
+
+
 

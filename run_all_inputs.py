@@ -12,6 +12,7 @@ programa = [
     "visitor.cpp",
     "peephole.cpp", 
     "dag.cpp",
+    "typechecker.cpp",
 ]
 
 # Compilar

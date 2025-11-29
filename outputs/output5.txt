@@ -231,6 +231,6 @@ TOKEN(RPAREN, ")")
 TOKEN(SEMICOL, ";")
 TOKEN(RBRACK, "}")
 Parser exitoso
-Generando codigo ensamblador en overload-inputs/input-5.s
 
 === STDERR ===
+libc++abi: terminating due to uncaught exception of type std::runtime_error: No hay impl Add para tipos i32 y i32

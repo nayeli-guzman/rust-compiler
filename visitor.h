@@ -48,6 +48,7 @@ public:
     virtual int visit(StructField* ) = 0;
     virtual int visit(StructDec* ) = 0;
     virtual int visit(FcallStm* ) = 0;
+    virtual int visit(ImplDec* ) = 0;
 
     virtual int visit(IndexExp* ) = 0;
     virtual int visit(StringExp* exp) = 0;
@@ -106,6 +107,7 @@ public:
     int visit(StructDec* ) override;
     int visit(StringExp* ) override;
     int visit(FcallStm* ) override;
+    int visit(ImplDec* ) override;
 
     int visit(IndexExp* exp) override;
 

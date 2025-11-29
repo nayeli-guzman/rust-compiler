@@ -11,6 +11,16 @@ unordered_map<string, StructInfo> structTable; // Definition of structTable
 
 static unordered_map<string, string> g_stringLabels;   
 static int g_nextStringId = 0;
+
+// key = "LeftType#RightType", value = nombre de la función
+static unordered_map<string, string> g_addImplFunc;
+// tipo de salida para esa combinación
+static unordered_map<string, string> g_addImplResult;
+// key = nombre de variable, value = true si es un parámetro que guarda un puntero a struct
+static unordered_map<string, bool> g_pointerParams;
+
+
+
 // --- helpers ---
 
 static bool isArrayType(const std::string& t) {
@@ -91,6 +101,10 @@ int GenCodeVisitor::visit(Program* program) {
         dec->accept(this);
 
     out << ".text\n";
+
+    for (auto dec : program->impls)
+        dec->accept(this);
+
     
     for (auto dec : program->fdlist)
         dec->accept(this);
@@ -170,12 +184,22 @@ int GenCodeVisitor::visit(IdExp* exp) {
         bool isArray  = varTypes.count(exp->value) &&
                         isArrayType(varTypes[exp->value]);
 
-        if (isStruct || isArray) { // struct o array local -> dirección
+        // Caso especial: parámetros puntero a struct (self, other en impl Add)
+        bool isPointerParam = g_pointerParams.count(exp->value) && g_pointerParams[exp->value];
+
+        if (isStruct && isPointerParam) {
+            // La variable guarda un puntero a struct: carga el puntero
+            out << " movq " << memoria[exp->value] << "(%rbp), %rax" << endl;
+        }
+        else if (isStruct || isArray) {
+            // Struct o array local "normal": %rax = &var
             out << " leaq " << memoria[exp->value] << "(%rbp), %rax" << endl;
-        } else { // escalar local
+        }
+        else { // escalar local
             out << " movq " << memoria[exp->value] << "(%rbp), %rax" << endl;
         }
     }
+
     return 0;
 }
 
@@ -214,26 +238,60 @@ int GenCodeVisitor::visit(IndexExp* exp) {
 }
 
 int GenCodeVisitor::visit(BinaryExp* exp) {
+    // Evaluar lado izquierdo
     exp->left->accept(this);
     out << " pushq %rax\n";
-    exp->right->accept(this);
-    out << " movq %rax, %rcx\n popq %rax\n";
 
+    // Evaluar lado derecho
+    exp->right->accept(this);
+    out << " movq %rax, %rcx\n";
+    out << " popq %rax\n";  // %rax = left, %rcx = right
+
+    // ----- Comparación '<' tal cual -----
+    if (exp->op == LT_OP) {
+        out << " cmpq %rcx, %rax\n"
+            << " movl $0, %eax\n"
+            << " setl %al\n"
+            << " movzbq %al, %rax\n";
+        g_lastType = "i64";   // bool como i64
+        return 0;
+    }
+
+    // ----- Suma con posible sobrecarga -----
+    if (exp->op == PLUS_OP && exp->isOverloadedAdd) {
+        // Tenemos left en %rax, right en %rcx
+        // Convención: self -> %rdi, other -> %rsi
+        out << " movq %rax, %rdi\n";
+        out << " movq %rcx, %rsi\n";
+        out << " call " << exp->addImplName << "\n";
+
+        g_lastType = exp->ty;   // "Punto", típicamente
+        return 0;
+    }
+
+    // ----- Resto: operadores built-in sobre i64 -----
     switch (exp->op) {
-        case PLUS_OP:  out << " addq %rcx, %rax\n"; break;
-        case MINUS_OP: out << " subq %rcx, %rax\n"; break;
-        case MUL_OP:   out << " imulq %rcx, %rax\n"; break;
-        case DIV_OP:   out << " imulq %rcx, %rax\n"; break;
-        case POW_OP:   out << " imulq %rcx, %rax\n"; break;
-        case LT_OP:
-            out << " cmpq %rcx, %rax\n"
-                      << " movl $0, %eax\n"
-                      << " setl %al\n"
-                      << " movzbq %al, %rax\n";
+        case PLUS_OP:
+            out << " addq %rcx, %rax\n";
+            break;
+        case MINUS_OP:
+            out << " subq %rcx, %rax\n";
+            break;
+        case MUL_OP:
+            out << " imulq %rcx, %rax\n";
+            break;
+        case DIV_OP:
+        case POW_OP:
+            out << " imulq %rcx, %rax\n";
+            break;
+        default:
             break;
     }
+
+    g_lastType = "i64";   // todos estos operadores devuelven i64
     return 0;
 }
+
 
 int GenCodeVisitor::visit(AssignStm* stm) {
     // 1. dirección del LHS en %rcx, y tipo del LHS
@@ -379,14 +437,22 @@ int GenCodeVisitor::visit(AssignStm* stm) {
     }
 
     // 4.2 struct o array con RHS general (copia de memoria)
-    stm->e->accept(this);             // %rax = puntero origen
+    if (lhsIsStruct || lhsIsArray) {
+        // Guardar &lhs en la pila
+        out << " pushq %rcx\n";          // stack: [&lhs]
 
-    int totalSize = getTypeSize(lhsType);
-    out << " movq %rax, %rsi\n";      // src
-    out << " movq %rcx, %rdi\n";      // dst (&lhs)
-    out << " movq $" << (totalSize / 8) << ", %rcx\n";
-    out << " rep movsq\n";
-    out << " movq %rdi, %rax\n";      // resultado = &lhs
+        // Evaluar RHS
+        stm->e->accept(this);            // %rax = puntero origen
+
+        int totalSize = getTypeSize(lhsType);
+
+        out << " movq %rax, %rsi\n";     // src
+        out << " popq %rdi\n";           // dst = &lhs (recuperado)
+        out << " movq $" << (totalSize / 8) << ", %rcx\n";
+        out << " rep movsq\n";
+        out << " movq %rdi, %rax\n";
+        return 0;
+    }
 
     return 0;
 }
@@ -498,8 +564,6 @@ int GenCodeVisitor::visit(LetStm* exp) {
     // caso 1: struct 
     if (structTable.count(exp->type)) { // let p: Punto = Punto { ... };
         int baseOff = memoria[exp->id];
-        out << " leaq " << baseOff << "(%rbp), %rcx\n";  // %rcx = &p
-
         StructInfo &info = structTable[exp->type];
         auto *lit = dynamic_cast<StructLitExp*>(exp->e);
 
@@ -514,40 +578,23 @@ int GenCodeVisitor::visit(LetStm* exp) {
             string fType = info.fieldType[fname];
             int off = info.fieldOffset[fname];
 
-            if (structTable.count(fType)) { // struct anidado
-                auto *nestedLit = fe ? dynamic_cast<StructLitExp*>(fe) : nullptr;
-                StructInfo &nInfo = structTable[fType];
-
-                unordered_map<std::string, Exp*> nestedMap;
-                if (nestedLit) {
-                    for (auto &nf : nestedLit->fields)
-                        nestedMap[nf.first] = nf.second;
-                }
-
-                // &campo (ej &p.from) en %rdx
-                out << " leaq " << off << "(%rcx), %rdx\n";
-
-                for (const std::string &nfName : nInfo.fieldOrder) {
-                    Exp *nfExp = nestedMap.count(nfName) ? nestedMap[nfName] : nullptr;
-                    if (nfExp) {
-                        nfExp->accept(this);     // %rax = valor campo interno
-                    } else {
-                        out << " movq $0, %rax\n";
-                    }
-                    int nOff = nInfo.fieldOffset[nfName];
-                    out << " movq %rax, " << nOff << "(%rdx)\n";
-                }
-
-            } else { // Campo escalar normal
+            if (structTable.count(fType)) {
+                // si no necesitas structs anidados, puedes inicializarlos a 0
+                out << " movq $0, %rax\n";
+                out << " movq %rax, " << (baseOff + off) << "(%rbp)\n";
+            } else {
                 if (fe)
-                    fe->accept(this);           // %rax = valor
+                    fe->accept(this);              // %rax = valor del campo
                 else
                     out << " movq $0, %rax\n";
-                out << " movq %rax, " << off << "(%rcx)\n";
+
+                // OJO: ahora recalculamos &p en %rdx, no usamos %rcx
+                out << " leaq " << baseOff << "(%rbp), %rdx\n";
+                out << " movq %rax, " << off << "(%rdx)\n";
             }
         }
 
-        out << " movq %rcx, %rax\n";
+        out << " leaq " << baseOff << "(%rbp), %rax\n";  
         return 0;
     }
 
@@ -928,6 +975,49 @@ int GenCodeVisitor::visit(FcallStm* stm) {
     // Simplemente generamos el código de la llamada
     stm->call->accept(this);
     // ignoramos el valor de retorno (si lo hay)
+    return 0;
+}
+
+int GenCodeVisitor::visit(ImplDec* impl) {
+    // Solo soportamos impl Add for T
+    if (impl->traitName != "Add") {
+        // por ahora ignorar otros traits
+        return 0;
+    }
+
+    // key para la tabla: T#U (selfType#otherType)
+    std::string key = impl->typeName + "#" + impl->paramType;
+
+    // nombre de función que va a implementar el operador
+    std::string fname = "__op_add_" + impl->typeName + "_" + impl->paramType;
+
+    g_addImplFunc[key]   = fname;
+    g_addImplResult[key] = impl->returnType;    // normalmente igual que outputType
+
+    // Construir un FunDec sintético para reutilizar visit(FunDec*)
+    FunDec fake;
+    fake.nombre = fname;
+
+    // parámetros: (self: Punto, other: Punto)
+    fake.Pnombres.push_back("self");
+    fake.Ptipos.push_back(impl->typeName);
+
+    fake.Pnombres.push_back(impl->paramName);   // "other"
+    fake.Ptipos.push_back(impl->paramType);
+
+    fake.tipo   = impl->returnType;
+    fake.cuerpo = impl->body;
+
+    // Marcar estos parámetros como "punteros a struct" en el código generado
+    g_pointerParams["self"] = true;
+    g_pointerParams[impl->paramName] = true;
+
+    visit(&fake);
+
+    // Limpiar marcas para no afectar otras funciones
+    g_pointerParams.erase("self");
+    g_pointerParams.erase(impl->paramName);
+
     return 0;
 }
 

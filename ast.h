@@ -25,6 +25,7 @@ enum BinaryOp {
 // Clase abstracta Exp
 class Exp {
 public:
+    std::string ty;   // tipo estático
     virtual int  accept(Visitor* visitor) = 0;
     virtual ~Exp() = 0;  // Destructor puro → clase abstracta
     static string binopToChar(BinaryOp op);  // Conversión operador → string
@@ -36,6 +37,10 @@ public:
     Exp* left;
     Exp* right;
     BinaryOp op;
+
+    bool isOverloadedAdd = false;
+    std::string addImplName;  // "__op_add_Punto_Punto"
+
     int accept(Visitor* visitor);
     BinaryExp(Exp* l, Exp* r, BinaryOp op);
     ~BinaryExp();
@@ -135,6 +140,8 @@ struct ImplDec {
     std::string paramType;           // "Punto"
     std::string returnType;          // "Punto"
     Body*       body;                // cuerpo del método
+    int accept(Visitor* visitor);
+
 };
 
 // ------------------ Stm -------------------
