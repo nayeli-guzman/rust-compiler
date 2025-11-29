@@ -3,7 +3,20 @@
 ## Gramática del Lenguaje (mini-Rust, EBNF)
 
 ```ebnf
-Program        ::= { StructDec } { GlobalVar } { FunDec } EOF ;
+Program        ::= { UseDecl } { StructDec } { GlobalVar } { ImplDec } { FunDec } EOF ;
+
+UseDecl        ::= "use" Identifier "::" Identifier "::" Identifier ";" ;
+
+ImplDec ::= "impl" Identifier "for" Type "{"
+              TypeAlias
+              Method
+           "}" ;
+
+TypeAlias      ::= "type" Identifier "=" Type ";" ;
+
+Method         ::= "fn" Identifier "(" "self"  "," Param ")" "->" Type 
+                   Block ;
+
 
 StructDec      ::= "struct" Identifier "{" StructFieldList "}" ;
 StructFieldList::= [ StructField { "," StructField } ] ;
@@ -61,6 +74,7 @@ Primary        ::= Number
                  | StringLiteral          
                  | "true"
                  | "false"
+                 | "self" 
                  | "(" CE ")"
                  | Identifier
                  | Identifier "(" [ CE { "," CE } ] ")"

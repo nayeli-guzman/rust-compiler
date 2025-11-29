@@ -77,6 +77,11 @@ Token* Scanner::nextToken() {
         else if (lexema=="mut") return new Token(Token::MUT, input, first, current - first);
         else if (lexema=="let") return new Token(Token::LET, input, first, current - first);
         else if (lexema=="struct") return new Token(Token::STRUCT, input, first, current - first);
+        else if (lexema=="use") return new Token(Token::USE, input, first, current - first);
+        else if (lexema=="impl") return new Token(Token::IMPL, input, first, current - first);
+        else if (lexema=="type") return new Token(Token::TYPE, input, first, current - first);
+        else if (lexema=="for") return new Token(Token::FOR, input, first, current - first);
+        else if (lexema=="self") return new Token(Token::SELF, input, first, current - first);
 
         else return new Token(Token::ID, input, first, current - first);
     }
