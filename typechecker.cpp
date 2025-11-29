@@ -68,7 +68,7 @@ int TypeChecker::visit(StructDec* s) {
         info.fieldOffset[name] = idx;
         info.fieldType[name]   = *itType;
 
-        int fieldSize = /* getTypeSize(*itType) */ 8; // aquí puede ser 8 simple
+        int fieldSize = /* getTypeSize(*itType) */ 8;
         idx += fieldSize;
         ++itType;
     }
@@ -77,10 +77,9 @@ int TypeChecker::visit(StructDec* s) {
     return 0;
 }
 
-// ===================== ImplDec (Add) =====================
+// ===================== ImplDec =====================
 
 int TypeChecker::visit(ImplDec* impl) {
-    // Solo traits de nivel 1 que soportas por ahora
     if (impl->traitName != "Add" &&
         impl->traitName != "Sub" &&
         impl->traitName != "Mul" &&
@@ -88,21 +87,18 @@ int TypeChecker::visit(ImplDec* impl) {
         return 0;
     }
 
-    // nombre del operador en minúsculas, igual que en GenCodeVisitor
     std::string opName;
     if      (impl->traitName == "Add") opName = "add";
     else if (impl->traitName == "Sub") opName = "sub";
     else if (impl->traitName == "Mul") opName = "mul";
     else if (impl->traitName == "Div") opName = "div";
 
-    // key y nombre de función EXACTAMENTE iguales a visitor.cpp
     std::string key   = impl->traitName + "#" + impl->typeName + "#" + impl->paramType;
     std::string fname = "__op_" + opName + "_" + impl->typeName + "_" + impl->paramType;
 
     g_opImplFunc[key]   = fname;
     g_opImplResult[key] = impl->returnType;
 
-    // el resto igual que ya tenías (typecheck del cuerpo)
     auto oldVarTypes = varTypes;
     std::string oldRet  = currentFunctionReturnType;
     std::string oldName = currentFunctionName;
@@ -283,7 +279,7 @@ int TypeChecker::visit(FcallExp* e) {
     return 0;
 }
 
-// --------- BinaryExp (aquí va la sobrecarga de +) ---------
+// --------- BinaryExp ---------
 
 int TypeChecker::visit(BinaryExp* e) {
     std::string lt = typeOf(e->left);
@@ -379,13 +375,12 @@ int TypeChecker::visit(BinaryExp* e) {
         }
     }
 
-    // fallback, por si acaso
     e->ty = "i64";
     return 0;
 }
 
 
-// ====== Stmts extra ======
+// ====== Stmts ======
 
 int TypeChecker::visit(PrintStm* stm) {
     typeOf(stm->e);

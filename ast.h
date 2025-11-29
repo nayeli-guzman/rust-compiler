@@ -25,10 +25,10 @@ enum BinaryOp {
 // Clase abstracta Exp
 class Exp {
 public:
-    std::string ty;   // tipo estático
+    std::string ty;   
     virtual int  accept(Visitor* visitor) = 0;
-    virtual ~Exp() = 0;  // Destructor puro → clase abstracta
-    static string binopToChar(BinaryOp op);  // Conversión operador → string
+    virtual ~Exp() = 0;  
+    static string binopToChar(BinaryOp op);  
 };
 
 // Expresión binaria
@@ -39,7 +39,7 @@ public:
     BinaryOp op;
 
     bool  hasOverloadedImpl;
-    std::string implFuncName;   // nombre de la función que generó ImplDec
+    std::string implFuncName;   
 
 
     int accept(Visitor* visitor);
@@ -126,7 +126,7 @@ public:
 };
 
 struct UseDecl {
-    std::string a, b, c;  // std, ops, Add  (por ahora suficiente)
+    std::string a, b, c;  
 };
 
 struct ImplDec {
