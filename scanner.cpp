@@ -83,17 +83,6 @@ Token* Scanner::nextToken() {
         else if (lexema=="for") return new Token(Token::FOR, input, first, current - first);
         else if (lexema=="self") return new Token(Token::SELF, input, first, current - first);
 
-        else if (lexema=="use") return new Token(Token::USE, input, first, current - first);
-        else if (lexema=="ops") return new Token(Token::OPS, input, first, current - first);
-        else if (lexema=="Add") return new Token(Token::ADD, input, first, current - first);
-        else if (lexema=="Sub") return new Token(Token::SUB, input, first, current - first);
-        else if (lexema=="Mul") return new Token(Token::MUL, input, first, current - first);
-        else if (lexema=="Div") return new Token(Token::DIV, input, first, current - first);
-        else if (lexema=="impl") return new Token(Token::IMPL, input, first, current - first);
-        else if (lexema=="for") return new Token(Token::FOR, input, first, current - first);
-        else if (lexema=="type") return new Token(Token::TYPE, input, first, current - first);
-        else if (lexema=="self") return new Token(Token::SELF, input, first, current - first);
-
         else return new Token(Token::ID, input, first, current - first);
     }
         // --- Strings y el formato "{}" de println! ---
