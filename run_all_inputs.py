@@ -26,7 +26,7 @@ if result.returncode != 0:
 print("Compilación exitosa")
 
 # Ejecutar
-input_dir = "peephole-inputs"
+input_dir = "dag-inputs"
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
 

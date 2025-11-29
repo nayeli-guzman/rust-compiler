@@ -6,10 +6,11 @@ fn main() {
     let mut b: i64 = x - y;
 
     let mut c: i64 = 0;
+    let mut t: i64 = 0;
 
 
     if (x < y) {
-        let mut t: i64 = x - y;
+        t= x - y;
         println!("{}", t);
     }
 
