@@ -1,57 +1,53 @@
 === STDOUT ===
-TOKEN(STATIC, "static")
-TOKEN(ID, "TITULO")
-TOKEN(COLON, ":")
-TOKEN(ID, "String")
-TOKEN(ASSIGN, "=")
-
-TOKEN(SEMICOL, ";")
 TOKEN(FUN, "fn")
 TOKEN(ID, "main")
 TOKEN(LPAREN, "(")
 TOKEN(RPAREN, ")")
+TOKEN(ARROW, "->")
+TOKEN(ID, "i32")
 TOKEN(LBRACK, "{")
+Es un BODY
+Es una SSAS
 TOKEN(LET, "let")
-TOKEN(ID, "linea")
+TOKEN(MUT, "mut")
+TOKEN(ID, "a")
 TOKEN(COLON, ":")
-TOKEN(ID, "String")
+TOKEN(ID, "i32")
 TOKEN(ASSIGN, "=")
-
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-TOKEN(ID, "TITULO")
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-TOKEN(ID, "linea")
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(PRINT, "println!")
-TOKEN(LPAREN, "(")
-TOKEN(PRINT_NUM, ""{}"")
-TOKEN(COMA, ",")
-
-TOKEN(RPAREN, ")")
-TOKEN(SEMICOL, ";")
-TOKEN(RETURN, "return")
-TOKEN(LPAREN, "(")
 TOKEN(NUM, "0")
+TOKEN(SEMICOL, ";")
+Es una SSAS
+Es una etré
+TOKEN(ID, "a")
+Es una asignación2
+TOKEN(ASSIGN, "=")
+Es una asignación
+TOKEN(NUM, "10")
+TOKEN(SEMICOL, ";")
+Es una SSAS
+TOKEN(IF, "if")
+TOKEN(LPAREN, "(")
+TOKEN(ID, "a")
+TOKEN(LT, "<")
+TOKEN(NUM, "20")
 TOKEN(RPAREN, ")")
+TOKEN(LBRACK, "{")
+Es un BODY
+Es una SSAS
+TOKEN(PRINT, "println!")
+TOKEN(LPAREN, "(")
+TOKEN(PRINT_NUM, ""{}"")
+TOKEN(COMA, ",")
+TOKEN(ID, "a")
+TOKEN(RPAREN, ")")
+TOKEN(SEMICOL, ";")
+TOKEN(RBRACK, "}")
+Es una SSAS
+TOKEN(RETURN, "return")
+TOKEN(NUM, "0")
+TOKEN(SEMICOL, ";")
 TOKEN(RBRACK, "}")
 Parser exitoso
-Generando codigo ensamblador en string-inputs/input-2.s
+Generando codigo ensamblador en rust-inputs/input-2.s
 
 === STDERR ===

@@ -43,8 +43,9 @@ LValueSuffix ::= "." Identifier
 PrintStm       ::= "println!" "(" "{}" "," CE ")" ;
 ReturnStm      ::= "return" "(" CE ")" ;
 
-IfStm          ::= "if" CE Block [ "else" Block ] ;
-WhileStm       ::= "while" CE Block ;
+IfStm      ::= "if" "(" CE ")" Block [ "else" Block ] ;
+WhileStm   ::= "while" "(" CE ")" Block ;
+
 
 CE             ::= BE [ "<" BE ] ;
 BE             ::= E { ("+" | "-") E } ;

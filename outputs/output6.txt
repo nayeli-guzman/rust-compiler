@@ -9,6 +9,8 @@ TOKEN(RPAREN, ")")
 TOKEN(ARROW, "->")
 TOKEN(ID, "i32")
 TOKEN(LBRACK, "{")
+Es un BODY
+Es una SSAS
 TOKEN(RETURN, "return")
 TOKEN(ID, "x")
 TOKEN(PLUS, "+")
@@ -22,6 +24,8 @@ TOKEN(RPAREN, ")")
 TOKEN(ARROW, "->")
 TOKEN(ID, "i32")
 TOKEN(LBRACK, "{")
+Es un BODY
+Es una SSAS
 TOKEN(PRINT, "println!")
 TOKEN(LPAREN, "(")
 TOKEN(PRINT_NUM, ""{}"")
@@ -32,13 +36,12 @@ TOKEN(NUM, "21")
 TOKEN(RPAREN, ")")
 TOKEN(RPAREN, ")")
 TOKEN(SEMICOL, ";")
+Es una SSAS
 TOKEN(RETURN, "return")
 TOKEN(NUM, "0")
 TOKEN(SEMICOL, ";")
 TOKEN(RBRACK, "}")
 Parser exitoso
-Codigo:
-
 Generando codigo ensamblador en rust-inputs/input-6.s
 
 === STDERR ===

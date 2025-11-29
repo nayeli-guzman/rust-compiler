@@ -1,21 +1,28 @@
 .data
-print_fmt: .string "%ld \n"
-X: .quad 0
+print_fmt: 
+.string "%ld \n"
+X:
+.quad 0
 .text
 .globl suma
 suma:
  pushq %rbp
  movq %rsp, %rbp
- movq %rdi,-8(%rbp)
- movq %rsi,-16(%rbp)
- subq $24, %rsp
+ movq %rdi, -8(%rbp)
+ movq %rsi, -16(%rbp)
+ subq $32, %rsp
+ movq $0, %rax
+ movq %rax, -24(%rbp)
+ leaq -24(%rbp), %rcx
+ pushq %rcx
  movq -8(%rbp), %rax
  pushq %rax
  movq -16(%rbp), %rax
  movq %rax, %rcx
  popq %rax
  addq %rcx, %rax
- movq %rax, -24(%rbp)
+ popq %rcx
+ movq %rax, (%rcx)
  movq -24(%rbp), %rax
  jmp .end_suma
 .end_suma:
@@ -25,12 +32,11 @@ ret
 main:
  pushq %rbp
  movq %rsp, %rbp
- subq $0, %rsp
  movq $2, %rax
- mov %rax, %rdi
+ movq %rax, %rdi
  movq $3, %rax
- mov %rax, %rsi
-call suma
+ movq %rax, %rsi
+ call suma
  movq %rax, %rsi
  leaq print_fmt(%rip), %rdi
  movl $0, %eax

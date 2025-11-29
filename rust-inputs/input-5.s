@@ -1,12 +1,13 @@
 .data
-print_fmt: .string "%ld \n"
+print_fmt: 
+.string "%ld \n"
 .text
 .globl id
 id:
  pushq %rbp
  movq %rsp, %rbp
- movq %rdi,-8(%rbp)
- subq $8, %rsp
+ movq %rdi, -8(%rbp)
+ subq $16, %rsp
  movq -8(%rbp), %rax
  jmp .end_id
 .end_id:
@@ -16,10 +17,9 @@ ret
 main:
  pushq %rbp
  movq %rsp, %rbp
- subq $0, %rsp
  movq $42, %rax
- mov %rax, %rdi
-call id
+ movq %rax, %rdi
+ call id
  movq %rax, %rsi
  leaq print_fmt(%rip), %rdi
  movl $0, %eax

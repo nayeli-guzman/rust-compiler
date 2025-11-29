@@ -197,6 +197,8 @@ FunDec *Parser::parseFunDec() {
 
 Body* Parser::parseBody() {
     Body* b = new Body();
+            cout << "Es un BODY" << endl;
+
  
     while (true) {
         if (check(Token::RBRACK)) break;
@@ -233,12 +235,18 @@ Stm* Parser::parseStm() {
     string variable;
     Body* tb = nullptr;
     Body* fb = nullptr;
+            cout << "Es una SSAS" << endl;
+
     if (check(Token::ID)) {
         // Parsear algo que empieza por ID: puede ser LValue o llamada
+            cout << "Es una etré" << endl;
+
         Exp* e0 = parseF();   // usa Primary + FSuffix (., [ ])
+            cout << "Es una asignación2" << endl;
 
         // ¿Es asignación?  LValue "=" CE
         if (match(Token::ASSIGN)) {
+            cout << "Es una asignación" << endl;
             Exp* rhs = parseCE();
             return new AssignStm(e0, rhs);
         }
@@ -281,12 +289,17 @@ Stm* Parser::parseStm() {
         return r;
     }
     else if (match(Token::IF)) {
+
+        match(Token::LPAREN);   // '(' obligatorio
         e = parseCE();
+        match(Token::RPAREN);   // ')'
+
         
         if (!match(Token::LBRACK)) {
             cout << "Error: se esperaba '{' después de la expresión." << endl;
             exit(1);
         }
+
         tb = parseBody();
         match(Token::RBRACK);
 
@@ -299,7 +312,9 @@ Stm* Parser::parseStm() {
         a = new IfStm(e, tb, fb);
     }
     else if (match(Token::WHILE)) {
+        match(Token::LPAREN);
         e = parseCE();
+        match(Token::RPAREN);
         if (!match(Token::LBRACK)) {
             cout << "Error: se esperaba '{' después de la expresión." << endl;
             exit(1);
@@ -414,6 +429,7 @@ Exp* Parser::parsePrimary() {
         return e;
     }
     else if (match(Token::ID)) {
+
         nom = previous->text;
         if(check(Token::LPAREN)) {
             

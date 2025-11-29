@@ -1,12 +1,13 @@
 .data
-print_fmt: .string "%ld \n"
+print_fmt: 
+.string "%ld \n"
 .text
 .globl cond
 cond:
  pushq %rbp
  movq %rsp, %rbp
- movq %rdi,-8(%rbp)
- subq $8, %rsp
+ movq %rdi, -8(%rbp)
+ subq $16, %rsp
  movq -8(%rbp), %rax
  pushq %rax
  movq $4, %rax
@@ -32,17 +33,16 @@ ret
 main:
  pushq %rbp
  movq %rsp, %rbp
- subq $0, %rsp
  movq $5, %rax
- mov %rax, %rdi
-call cond
+ movq %rax, %rdi
+ call cond
  movq %rax, %rsi
  leaq print_fmt(%rip), %rdi
  movl $0, %eax
  call printf@PLT
  movq $3, %rax
- mov %rax, %rdi
-call cond
+ movq %rax, %rdi
+ call cond
  movq %rax, %rsi
  leaq print_fmt(%rip), %rdi
  movl $0, %eax

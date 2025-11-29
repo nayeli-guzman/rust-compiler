@@ -3,7 +3,16 @@ import subprocess
 import shutil
 
 # Archivos c++
-programa = ["main.cpp", "scanner.cpp", "token.cpp", "parser.cpp", "ast.cpp", "visitor.cpp"]
+programa = [
+    "main.cpp",
+    "scanner.cpp",
+    "token.cpp",
+    "parser.cpp",
+    "ast.cpp",
+    "visitor.cpp",
+    "peephole.cpp", 
+    "dag.cpp",
+]
 
 # Compilar
 compile = ["g++"] + programa
@@ -17,11 +26,11 @@ if result.returncode != 0:
 print("Compilación exitosa")
 
 # Ejecutar
-input_dir = "string-inputs"
+input_dir = "rust-inputs"
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
 
-for i in range(1, 6):
+for i in range(1, 15):
     filename = f"input-{i}.rs"
     filepath = os.path.join(input_dir, filename)
 
