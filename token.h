@@ -52,7 +52,15 @@ public:
         STRUCT,
         RCORCH,  // ]
         LCORCH,   // [
-        STRING
+        STRING,
+        USE,
+        OPS,
+        ADD,
+        SUB,
+        IMPL,
+        FOR,
+        TYPE,
+        SELF
     };
 
     // Atributos
