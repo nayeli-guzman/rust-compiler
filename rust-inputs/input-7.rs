@@ -1,4 +1,4 @@
-fn fib(n: i32) -> i32 {
+fn fib(n: i64) -> i64 {
     if (n < 2) {
         return n;
     } else {
@@ -6,7 +6,7 @@ fn fib(n: i32) -> i32 {
     }
 }
 
-fn main() -> i32 {
+fn main() -> i64 {
     println!("{}", fib(10));
     return 0;
 }

@@ -9,12 +9,13 @@ main:
  pushq %rbp
  movq %rsp, %rbp
  subq $16, %rsp
- leaq -16(%rbp), %rcx
  leaq .LC_str0(%rip), %rax
- movq %rax, 0(%rcx)
+ leaq -16(%rbp), %rdx
+ movq %rax, 0(%rdx)
  movq $3, %rax
- movq %rax, 8(%rcx)
- movq %rcx, %rax
+ leaq -16(%rbp), %rdx
+ movq %rax, 8(%rdx)
+ leaq -16(%rbp), %rax
  leaq .LC_str1(%rip), %rax
  movq %rax, %rsi
  leaq print_fmt_str(%rip), %rdi

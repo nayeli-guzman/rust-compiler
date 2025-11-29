@@ -1,5 +1,5 @@
-fn main() -> i32 {
-    let mut a: i32 = 0; 
+fn main() -> i64 {
+    let mut a: i64 = 0; 
     a = 10;
 
     if (a < 5) { 

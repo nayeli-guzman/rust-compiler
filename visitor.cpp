@@ -12,8 +12,10 @@ unordered_map<string, StructInfo> structTable;
 static unordered_map<string, string> g_stringLabels;   
 static int g_nextStringId = 0;
 
-static unordered_map<string, string> g_addImplFunc;
-static unordered_map<string, string> g_addImplResult;
+// key = "Trait#LeftType#RightType"
+unordered_map<string, string> g_opImplFunc;
+unordered_map<string, string> g_opImplResult;
+
 static unordered_map<string, bool> g_pointerParams;
 
 
@@ -236,6 +238,14 @@ int GenCodeVisitor::visit(BinaryExp* exp) {
     out << " movq %rax, %rcx\n";
     out << " popq %rax\n";  
 
+    if (exp->hasOverloadedImpl) {
+        out << " movq %rax, %rdi\n"; // self
+        out << " movq %rcx, %rsi\n"; // other
+        out << " call " << exp->implFuncName << "\n";
+        g_lastType = exp->ty;
+        return 0;
+    }
+
     if (exp->op == LT_OP) {
         out << " cmpq %rcx, %rax\n"
             << " movl $0, %eax\n"
@@ -245,15 +255,6 @@ int GenCodeVisitor::visit(BinaryExp* exp) {
         return 0;
     }
 
-    if (exp->op == PLUS_OP && exp->isOverloadedAdd) {
-        
-        out << " movq %rax, %rdi\n";
-        out << " movq %rcx, %rsi\n";
-        out << " call " << exp->addImplName << "\n";
-
-        g_lastType = exp->ty;   
-        return 0;
-    }
 
     switch (exp->op) {
         case PLUS_OP:
@@ -519,9 +520,10 @@ int GenCodeVisitor::visit(ReturnStm* stm) {
 }
 
 int GenCodeVisitor::visit(LetStm* exp) {
-    
-    varTypes[exp->id] = exp->type; 
+    // Registrar tipo de la variable
+    varTypes[exp->id] = exp->type;
 
+    // PRIMER PASE: solo calcular offsets
     if (countStruct) {
         int size = getTypeSize(exp->type);
         offset -= size;
@@ -529,11 +531,13 @@ int GenCodeVisitor::visit(LetStm* exp) {
         return 0;
     }
 
-    if (structTable.count(exp->type)) { 
+    // ========= CASO 1: struct local =========
+    if (structTable.count(exp->type)) { // let l: Line = Line { ... };
         int baseOff = memoria[exp->id];
         StructInfo &info = structTable[exp->type];
         auto *lit = dynamic_cast<StructLitExp*>(exp->e);
 
+        // mapa campo -> expresión
         unordered_map<string, Exp*> fieldExprs;
         if (lit) {
             for (auto &f : lit->fields)
@@ -542,30 +546,70 @@ int GenCodeVisitor::visit(LetStm* exp) {
 
         for (const std::string &fname : info.fieldOrder) {
             Exp *fe = fieldExprs.count(fname) ? fieldExprs[fname] : nullptr;
-            string fType = info.fieldType[fname];
-            int off = info.fieldOffset[fname];
+            string fType   = info.fieldType[fname];
+            int   fieldOff = info.fieldOffset[fname];
 
+            // ----- campo struct anidado (p.ej. from: Point, to: Point) -----
             if (structTable.count(fType)) {
-                out << " movq $0, %rax\n";
-                out << " movq %rax, " << (baseOff + off) << "(%rbp)\n";
-            } else {
+                StructInfo &nestedInfo = structTable[fType];
+
+                StructLitExp* nestedLit = nullptr;
+                if (fe) {
+                    nestedLit = dynamic_cast<StructLitExp*>(fe);
+                }
+
+                // mapa campo -> Exp* del struct anidado
+                unordered_map<string, Exp*> nestedMap;
+                if (nestedLit) {
+                    for (auto &nf : nestedLit->fields) {
+                        nestedMap[nf.first] = nf.second;
+                    }
+                }
+
+                // &l.from o &l.to en %rdx
+                out << " leaq " << (baseOff + fieldOff) << "(%rbp), %rdx\n";
+
+                // rellenar campos del struct anidado (Point)
+                for (const std::string &nfName : nestedInfo.fieldOrder) {
+                    Exp *nfExp    = nestedMap.count(nfName) ? nestedMap[nfName] : nullptr;
+                    std::string nfType = nestedInfo.fieldType[nfName];
+                    int nOff      = nestedInfo.fieldOffset[nfName];
+
+                    if (structTable.count(nfType)) {
+                        // si hubiera structs aún más profundos: lo dejamos en 0
+                        out << " movq $0, %rax\n";
+                        out << " movq %rax, " << nOff << "(%rdx)\n";
+                    } else {
+                        if (nfExp) {
+                            nfExp->accept(this);      // %rax = valor del campo
+                        } else {
+                            out << " movq $0, %rax\n";
+                        }
+                        out << " movq %rax, " << nOff << "(%rdx)\n";
+                    }
+                }
+            }
+            // ----- campo escalar normal -----
+            else {
                 if (fe)
-                    fe->accept(this);              
+                    fe->accept(this);              // %rax = valor del campo
                 else
                     out << " movq $0, %rax\n";
 
                 out << " leaq " << baseOff << "(%rbp), %rdx\n";
-                out << " movq %rax, " << off << "(%rdx)\n";
+                out << " movq %rax, " << fieldOff << "(%rdx)\n";
             }
         }
 
+        // resultado de la expresión: &variable
         out << " leaq " << baseOff << "(%rbp), %rax\n";  
         return 0;
     }
 
+    // ========= CASO 2: array local =========
     if (isArrayType(exp->type)) {
         int baseOff = memoria[exp->id];
-        out << " leaq " << baseOff << "(%rbp), %rcx\n";  
+        out << " leaq " << baseOff << "(%rbp), %rcx\n";  // %rcx = &arr
 
         std::string elemType;
         int len = 0;
@@ -574,11 +618,13 @@ int GenCodeVisitor::visit(LetStm* exp) {
 
         auto *lit = dynamic_cast<ArrayLitExp*>(exp->e);
 
+        // ---- Array de structs ----
         if (structTable.count(elemType)) {
             StructInfo &info = structTable[elemType];
+
             for (int i = 0; i < len; ++i) {
                 int elemOff = i * elemSize;
-                out << " leaq " << elemOff << "(%rcx), %rdx\n";
+                out << " leaq " << elemOff << "(%rcx), %rdx\n"; // &arr[i]
 
                 StructLitExp *se = nullptr;
                 if (lit && i < (int)lit->elems.size()) {
@@ -587,9 +633,8 @@ int GenCodeVisitor::visit(LetStm* exp) {
 
                 unordered_map<std::string, Exp*> fieldExprs;
                 if (se) {
-                    for (auto &f : se->fields) {
+                    for (auto &f : se->fields)
                         fieldExprs[f.first] = f.second;
-                    }
                 }
 
                 for (const std::string &fname : info.fieldOrder) {
@@ -602,7 +647,7 @@ int GenCodeVisitor::visit(LetStm* exp) {
                         out << " movq %rax, " << fOff << "(%rdx)\n";
                     } else {
                         if (fe) {
-                            fe->accept(this);         
+                            fe->accept(this);          // %rax = valor del campo
                         } else {
                             out << " movq $0, %rax\n";
                         }
@@ -611,37 +656,39 @@ int GenCodeVisitor::visit(LetStm* exp) {
                 }
             }
         }
-    else {
-        if (lit) {
-            // caso literal [1,2,3]
-            for (int i = 0; i < len; ++i) {
-                if (i < (int)lit->elems.size()) {
-                    lit->elems[i]->accept(this);   
-                } else {
-                    out << " movq $0, %rax\n";    
+        // ---- Array de escalares ----
+        else {
+            if (lit) {
+                // literal [1,2,3]
+                for (int i = 0; i < len; ++i) {
+                    if (i < (int)lit->elems.size()) {
+                        lit->elems[i]->accept(this);   // %rax = valor
+                    } else {
+                        out << " movq $0, %rax\n";     // padding con 0
+                    }
+                    int off = i * elemSize;
+                    out << " movq %rax, " << off << "(%rcx)\n";
                 }
-                int off = i * elemSize;
-                out << " movq %rax, " << off << "(%rcx)\n";
+            } else {
+                // caso general: RHS deja en %rax un puntero al array fuente
+                exp->e->accept(this);              // %rax = src
+                out << " movq %rax, %rsi\n";       // src
+                out << " movq %rcx, %rdi\n";       // dst = &arr (local)
+                out << " movq $" << (len * elemSize / 8) << ", %rcx\n";
+                out << " rep movsq\n";
             }
-        } else {
-       
-            exp->e->accept(this);              
-            out << " movq %rax, %rsi\n";       
-            out << " movq %rcx, %rdi\n";       
-            out << " movq $" << (len * elemSize / 8) << ", %rcx\n";
-            out << " rep movsq\n";
         }
+
+        out << " movq %rcx, %rax\n";
+        return 0;
     }
 
-    out << " movq %rcx, %rax\n";
-    return 0;
-
-    }
-
-    exp->e->accept(this);  
-    out << " movq %rax, " << memoria[exp->id] << "(%rbp)" << endl;
+    // ========= CASO 3: escalar normal =========
+    exp->e->accept(this);                      // %rax = valor de la expresión
+    out << " movq %rax, " << memoria[exp->id] << "(%rbp)\n";
     return 0;
 }
+
 
 int GenCodeVisitor::visit(FunDec* f) {
     entornoFuncion = true;
@@ -903,16 +950,25 @@ int GenCodeVisitor::visit(FcallStm* stm) {
 }
 
 int GenCodeVisitor::visit(ImplDec* impl) {
-    if (impl->traitName != "Add") {
+    if (impl->traitName != "Add" &&
+        impl->traitName != "Sub" &&
+        impl->traitName != "Mul" &&
+        impl->traitName != "Div") {
         return 0;
     }
 
-    std::string key = impl->typeName + "#" + impl->paramType;
+    // mapear trait -> nombre de operador en minúsculas
+    std::string opName;
+    if      (impl->traitName == "Add") opName = "add";
+    else if (impl->traitName == "Sub") opName = "sub";
+    else if (impl->traitName == "Mul") opName = "mul";
+    else if (impl->traitName == "Div") opName = "div";
 
-    std::string fname = "__op_add_" + impl->typeName + "_" + impl->paramType;
-
-    g_addImplFunc[key]   = fname;
-    g_addImplResult[key] = impl->returnType;   
+    // key = "Trait#LeftType#RightType"
+    std::string key   = impl->traitName + "#" + impl->typeName + "#" + impl->paramType;
+    std::string fname = "__op_" + opName + "_" + impl->typeName + "_" + impl->paramType;
+    g_opImplFunc[key]   = fname;
+    g_opImplResult[key] = impl->returnType;
 
     FunDec fake;
     fake.nombre = fname;
@@ -920,7 +976,7 @@ int GenCodeVisitor::visit(ImplDec* impl) {
     fake.Pnombres.push_back("self");
     fake.Ptipos.push_back(impl->typeName);
 
-    fake.Pnombres.push_back(impl->paramName);   
+    fake.Pnombres.push_back(impl->paramName);
     fake.Ptipos.push_back(impl->paramType);
 
     fake.tipo   = impl->returnType;
@@ -936,4 +992,5 @@ int GenCodeVisitor::visit(ImplDec* impl) {
 
     return 0;
 }
+
 

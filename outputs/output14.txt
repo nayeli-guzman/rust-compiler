@@ -4,19 +4,19 @@ TOKEN(ID, "fib")
 TOKEN(LPAREN, "(")
 TOKEN(ID, "n")
 TOKEN(COLON, ":")
-TOKEN(ID, "i32")
+TOKEN(ID, "i64")
 TOKEN(RPAREN, ")")
 TOKEN(ARROW, "->")
-TOKEN(ID, "i32")
+TOKEN(ID, "i64")
 TOKEN(LBRACK, "{")
-Es un BODY
 Es una SSAS
 TOKEN(IF, "if")
+TOKEN(LPAREN, "(")
 TOKEN(ID, "n")
 TOKEN(LT, "<")
 TOKEN(NUM, "2")
+TOKEN(RPAREN, ")")
 TOKEN(LBRACK, "{")
-Es un BODY
 Es una SSAS
 TOKEN(RETURN, "return")
 TOKEN(ID, "n")
@@ -24,7 +24,6 @@ TOKEN(SEMICOL, ";")
 TOKEN(RBRACK, "}")
 TOKEN(ELSE, "else")
 TOKEN(LBRACK, "{")
-Es un BODY
 Es una SSAS
 TOKEN(RETURN, "return")
 TOKEN(ID, "fib")
@@ -48,15 +47,14 @@ TOKEN(ID, "main")
 TOKEN(LPAREN, "(")
 TOKEN(RPAREN, ")")
 TOKEN(ARROW, "->")
-TOKEN(ID, "i32")
+TOKEN(ID, "i64")
 TOKEN(LBRACK, "{")
-Es un BODY
 Es una SSAS
 TOKEN(LET, "let")
 TOKEN(MUT, "mut")
 TOKEN(ID, "x")
 TOKEN(COLON, ":")
-TOKEN(ID, "i32")
+TOKEN(ID, "i64")
 TOKEN(ASSIGN, "=")
 TOKEN(NUM, "0")
 TOKEN(SEMICOL, ";")
@@ -70,11 +68,12 @@ TOKEN(NUM, "1")
 TOKEN(SEMICOL, ";")
 Es una SSAS
 TOKEN(WHILE, "while")
+TOKEN(LPAREN, "(")
 TOKEN(ID, "x")
 TOKEN(LT, "<")
 TOKEN(NUM, "50")
+TOKEN(RPAREN, ")")
 TOKEN(LBRACK, "{")
-Es un BODY
 Es una SSAS
 TOKEN(PRINT, "println!")
 TOKEN(LPAREN, "(")
@@ -111,6 +110,7 @@ TOKEN(NUM, "0")
 TOKEN(SEMICOL, ";")
 TOKEN(RBRACK, "}")
 Parser exitoso
+[TypeChecker] OK
 Generando codigo ensamblador en rust-inputs/input-14.s
 
 === STDERR ===

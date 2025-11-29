@@ -3,8 +3,10 @@
 #include <stdexcept>
 #include <iostream>
 
-std::unordered_map<std::string, std::string> g_addImplName;
-std::unordered_map<std::string, std::string> g_addResultType;
+extern std::unordered_map<std::string, std::string> g_opImplFunc;
+extern std::unordered_map<std::string, std::string> g_opImplResult;
+extern std::unordered_map<std::string, StructInfo>  structTable;
+
 
 bool isArrayType(const std::string& t) {
     return !t.empty() && t.front() == '[' && t.back() == ']';
@@ -78,32 +80,45 @@ int TypeChecker::visit(StructDec* s) {
 // ===================== ImplDec (Add) =====================
 
 int TypeChecker::visit(ImplDec* impl) {
-    if (impl->traitName != "Add") return 0;  
+    // Solo traits de nivel 1 que soportas por ahora
+    if (impl->traitName != "Add" &&
+        impl->traitName != "Sub" &&
+        impl->traitName != "Mul" &&
+        impl->traitName != "Div") {
+        return 0;
+    }
 
-    std::string key = impl->typeName + "#" + impl->paramType;
+    // nombre del operador en minúsculas, igual que en GenCodeVisitor
+    std::string opName;
+    if      (impl->traitName == "Add") opName = "add";
+    else if (impl->traitName == "Sub") opName = "sub";
+    else if (impl->traitName == "Mul") opName = "mul";
+    else if (impl->traitName == "Div") opName = "div";
 
-    std::string fname = "__op_add_" + impl->typeName + "_" + impl->paramType;
+    // key y nombre de función EXACTAMENTE iguales a visitor.cpp
+    std::string key   = impl->traitName + "#" + impl->typeName + "#" + impl->paramType;
+    std::string fname = "__op_" + opName + "_" + impl->typeName + "_" + impl->paramType;
 
-    g_addImplName[key]   = fname;
-    g_addResultType[key] = impl->returnType;
+    g_opImplFunc[key]   = fname;
+    g_opImplResult[key] = impl->returnType;
 
-
+    // el resto igual que ya tenías (typecheck del cuerpo)
     auto oldVarTypes = varTypes;
-    std::string oldRet = currentFunctionReturnType;
+    std::string oldRet  = currentFunctionReturnType;
     std::string oldName = currentFunctionName;
 
     currentFunctionReturnType = impl->returnType;
     currentFunctionName       = fname;
     varTypes.clear();
 
-    varTypes["self"]  = impl->typeName;
+    varTypes["self"]          = impl->typeName;
     varTypes[impl->paramName] = impl->paramType;
 
     impl->body->accept(this);
 
-    varTypes = oldVarTypes;
+    varTypes                 = oldVarTypes;
     currentFunctionReturnType = oldRet;
-    currentFunctionName = oldName;
+    currentFunctionName       = oldName;
 
     return 0;
 }
@@ -274,50 +289,101 @@ int TypeChecker::visit(BinaryExp* e) {
     std::string lt = typeOf(e->left);
     std::string rt = typeOf(e->right);
 
-    e->isOverloadedAdd = false;
-    e->addImplName.clear();
+    e->hasOverloadedImpl = false;
+    e->implFuncName.clear();
+
+    auto tryTrait = [&](const std::string& trait) {
+        std::string key = trait + "#" + lt + "#" + rt;
+        auto itName = g_opImplFunc.find(key);
+        auto itRes  = g_opImplResult.find(key);
+        if (itName != g_opImplFunc.end() && itRes != g_opImplResult.end()) {
+            e->hasOverloadedImpl = true;
+            e->implFuncName      = itName->second;   // __op_add_T_U, __op_sub_T_U, etc.
+            e->ty                = itRes->second;    // tipo de resultado
+            return true;
+        }
+        return false;
+    };
 
     switch (e->op) {
+        // ---------- + ----------
         case PLUS_OP: {
+            // builtin
             if (lt == "i64" && rt == "i64") {
                 e->ty = "i64";
                 return 0;
             }
-
-            std::string key = lt + "#" + rt;
-            auto itName = g_addImplName.find(key);
-            auto itRes  = g_addResultType.find(key);
-            if (itName != g_addImplName.end() && itRes != g_addResultType.end()) {
-                e->isOverloadedAdd = true;
-                e->addImplName     = itName->second;
-                e->ty              = itRes->second;
-                return 0;
-            }
+            // sobrecarga: impl Add for T
+            if (tryTrait("Add")) return 0;
 
             throw std::runtime_error(
                 "No hay impl Add para tipos " + lt + " y " + rt
             );
         }
 
-        case MINUS_OP:
-        case MUL_OP:
-        case DIV_OP:
-        case POW_OP:
-        case LT_OP:
-            if (lt != "i64" || rt != "i64") {
-                throw std::runtime_error("Operador aritmético/relacional requiere i64");
-            }
-            if (e->op == LT_OP) {
-                e->ty = "i64"; 
-            } else {
+        // ---------- - ----------
+        case MINUS_OP: {
+            if (lt == "i64" && rt == "i64") {
                 e->ty = "i64";
+                return 0;
             }
+            if (tryTrait("Sub")) return 0;
+
+            throw std::runtime_error(
+                "No hay impl Sub para tipos " + lt + " y " + rt
+            );
+        }
+
+        // ---------- * ----------
+        case MUL_OP: {
+            if (lt == "i64" && rt == "i64") {
+                e->ty = "i64";
+                return 0;
+            }
+            if (tryTrait("Mul")) return 0;
+
+            throw std::runtime_error(
+                "No hay impl Mul para tipos " + lt + " y " + rt
+            );
+        }
+
+        // ---------- / ----------
+        case DIV_OP: {
+            if (lt == "i64" && rt == "i64") {
+                e->ty = "i64";
+                return 0;
+            }
+            if (tryTrait("Div")) return 0;
+
+            throw std::runtime_error(
+                "No hay impl Div para tipos " + lt + " y " + rt
+            );
+        }
+
+        // ---------- < ----------
+        case LT_OP: {
+            if (lt != "i64" || rt != "i64") {
+                throw std::runtime_error("Operador '<' requiere i64");
+            }
+            e->ty = "i64"; // tu bool es i64
             return 0;
+        }
+
+        // ---------- ^ (POW_OP) o lo que tengas ----------
+        case POW_OP: {
+            if (lt != "i64" || rt != "i64") {
+                throw std::runtime_error("Operador '^' requiere i64");
+            }
+            e->ty = "i64";
+            return 0;
+        }
     }
 
+    // fallback, por si acaso
     e->ty = "i64";
     return 0;
 }
+
 
 // ====== Stmts extra ======
 

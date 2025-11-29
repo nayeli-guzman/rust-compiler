@@ -38,8 +38,9 @@ public:
     Exp* right;
     BinaryOp op;
 
-    bool isOverloadedAdd = false;
-    std::string addImplName;  // "__op_add_Punto_Punto"
+    bool  hasOverloadedImpl;
+    std::string implFuncName;   // nombre de la función que generó ImplDec
+
 
     int accept(Visitor* visitor);
     BinaryExp(Exp* l, Exp* r, BinaryOp op);

@@ -1,12 +1,12 @@
-static mut X: i32 = 0;
+static mut X: i64 = 0;
 
-fn suma(a: i32, b: i32) -> i32 {
-    let mut y: i32 = 0;
+fn suma(a: i64, b: i64) -> i64 {
+    let mut y: i64 = 0;
     y = a + b;
     return y;
 }
 
-fn main() -> i32 {
+fn main() -> i64 {
     println!("{}", suma(2, 3));
     return 0;
 }

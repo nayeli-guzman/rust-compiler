@@ -1,18 +1,21 @@
 .data
 print_fmt: 
 .string "%ld \n"
+print_fmt_str: 
+ .string "%s \n"
 .text
 .globl main
 main:
  pushq %rbp
  movq %rsp, %rbp
  subq $16, %rsp
- leaq -16(%rbp), %rcx
  movq $0, %rax
- movq %rax, 0(%rcx)
+ leaq -16(%rbp), %rdx
+ movq %rax, 0(%rdx)
  movq $0, %rax
- movq %rax, 8(%rcx)
- movq %rcx, %rax
+ leaq -16(%rbp), %rdx
+ movq %rax, 8(%rdx)
+ leaq -16(%rbp), %rax
 while_0:
  leaq -16(%rbp), %rax
  addq $0, %rax

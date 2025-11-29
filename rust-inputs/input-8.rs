@@ -1,8 +1,8 @@
-fn suma(a: i32, b: i32, c: i32) -> i32 {
+fn suma(a: i64, b: i64, c: i64) -> i64 {
     return a + b + c;
 }
 
-fn main() -> i32 {
+fn main() -> i64 {
     println!("{}", suma(1, 2, 3));
     return 0;
 }

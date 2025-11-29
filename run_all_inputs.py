@@ -60,8 +60,3 @@ for i in range(1, 6):
 
     else:
         print(filename, "no encontrado en", input_dir)
-
-
-
-
-

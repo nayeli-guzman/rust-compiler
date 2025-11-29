@@ -4,15 +4,14 @@ TOKEN(ID, "main")
 TOKEN(LPAREN, "(")
 TOKEN(RPAREN, ")")
 TOKEN(ARROW, "->")
-TOKEN(ID, "i32")
+TOKEN(ID, "i64")
 TOKEN(LBRACK, "{")
-Es un BODY
 Es una SSAS
 TOKEN(LET, "let")
 TOKEN(MUT, "mut")
 TOKEN(ID, "a")
 TOKEN(COLON, ":")
-TOKEN(ID, "i32")
+TOKEN(ID, "i64")
 TOKEN(ASSIGN, "=")
 TOKEN(NUM, "3")
 TOKEN(SEMICOL, ";")
@@ -21,7 +20,7 @@ TOKEN(LET, "let")
 TOKEN(MUT, "mut")
 TOKEN(ID, "b")
 TOKEN(COLON, ":")
-TOKEN(ID, "i32")
+TOKEN(ID, "i64")
 TOKEN(ASSIGN, "=")
 TOKEN(NUM, "4")
 TOKEN(SEMICOL, ";")
@@ -30,7 +29,7 @@ TOKEN(LET, "let")
 TOKEN(MUT, "mut")
 TOKEN(ID, "d")
 TOKEN(COLON, ":")
-TOKEN(ID, "i32")
+TOKEN(ID, "i64")
 TOKEN(ASSIGN, "=")
 TOKEN(NUM, "0")
 TOKEN(SEMICOL, ";")
@@ -42,7 +41,6 @@ TOKEN(LT, "<")
 TOKEN(ID, "b")
 TOKEN(RPAREN, ")")
 TOKEN(LBRACK, "{")
-Es un BODY
 Es una SSAS
 Es una etré
 TOKEN(ID, "d")
@@ -64,7 +62,6 @@ TOKEN(SEMICOL, ";")
 TOKEN(RBRACK, "}")
 TOKEN(ELSE, "else")
 TOKEN(LBRACK, "{")
-Es un BODY
 Es una SSAS
 TOKEN(PRINT, "println!")
 TOKEN(LPAREN, "(")
@@ -80,6 +77,7 @@ TOKEN(NUM, "0")
 TOKEN(SEMICOL, ";")
 TOKEN(RBRACK, "}")
 Parser exitoso
+[TypeChecker] OK
 Generando codigo ensamblador en rust-inputs/input-9.s
 
 === STDERR ===

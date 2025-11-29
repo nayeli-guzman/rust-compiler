@@ -1,8 +1,8 @@
-fn id(x: i32) -> i32 {
+fn id(x: i64) -> i64 {
     return x;
 }
 
-fn main() -> i32 {
+fn main() -> i64 {
     println!("{}", id(42));
     return 0;
 }

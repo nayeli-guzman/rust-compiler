@@ -1,7 +1,7 @@
-fn main() -> i32 {
-    let mut a: i32 = 3;
-    let mut b: i32 = 4;
-    let mut d: i32 = 0;
+fn main() -> i64 {
+    let mut a: i64 = 3;
+    let mut b: i64 = 4;
+    let mut d: i64 = 0;
 
     if (a < b) {
         d = a + b;
