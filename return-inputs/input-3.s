@@ -8,14 +8,26 @@ print_fmt_str:
 hola:
  pushq %rbp
  movq %rsp, %rbp
- subq $16, %rsp
+ subq $32, %rsp
  movq $10, %rax
  movq %rax, -8(%rbp)
  movq $20, %rax
  movq %rax, -16(%rbp)
- movq $7, %rax
+ movq -8(%rbp), %rax
+ movq %rax, -24(%rbp)
+ leaq -8(%rbp), %rcx
+ pushq %rcx
+ movq -16(%rbp), %rax
+ popq %rcx
+ movq %rax, (%rcx)
+ leaq -16(%rbp), %rcx
+ pushq %rcx
+ movq -24(%rbp), %rax
+ popq %rcx
+ movq %rax, (%rcx)
+ movq -8(%rbp), %rax
  movq %rax, 0(%rdi)
- movq $9, %rax
+ movq -16(%rbp), %rax
  movq %rax, 8(%rdi)
  movq %rdi, %rax
  jmp .end_hola

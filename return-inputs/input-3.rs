@@ -1,7 +1,12 @@
 fn hola() -> [i64; 2] {
-    let mut x: i64 = 10;
-    let mut y: i64 = 20;
-    return([7, 9]);
+    let mut a: i64 = 10;
+    let mut b: i64 = 20;
+
+    let mut tmp: i64 = a;
+    a = b;
+    b = tmp;
+
+    return([a, b]);
 }
 
 fn main() {
