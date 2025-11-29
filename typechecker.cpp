@@ -3,11 +3,9 @@
 #include <stdexcept>
 #include <iostream>
 
-// Definiciones globales de las tablas de impl
 std::unordered_map<std::string, std::string> g_addImplName;
 std::unordered_map<std::string, std::string> g_addResultType;
 
-// Si no los tienes en un header común, copia estos helpers de gencode:
 bool isArrayType(const std::string& t) {
     return !t.empty() && t.front() == '[' && t.back() == ']';
 }
@@ -30,30 +28,24 @@ void TypeChecker::checkProgram(Program* p) {
     std::cout << "[TypeChecker] OK\n";
 }
 
-// ===================== Program / top-level =====================
 
 int TypeChecker::visit(Program* p) {
-    // 1) structs: llenar structTable (ya lo haces en GenCode, aquí también)
     for (auto sd : p->sdlist) {
         sd->accept(this);
     }
 
-    // 2) registrar tipos de funciones (solo tipo retorno, para Fcall)
     for (auto fd : p->fdlist) {
         funcReturnTypes[fd->nombre] = fd->tipo;
     }
 
-    // 3) impls: registrar sobrecargas y chequear método
     for (auto impl : p->impls) {
         impl->accept(this);
     }
 
-    // 4) globales
     for (auto gv : p->vdlist) {
-        gv->accept(this);  // puedes hacer un visit(GlobalVar*) similar a LetStm
+        gv->accept(this);  
     }
 
-    // 5) funciones
     for (auto fd : p->fdlist) {
         fd->accept(this);
     }
@@ -64,8 +56,7 @@ int TypeChecker::visit(Program* p) {
 // ===================== StructDec =====================
 
 int TypeChecker::visit(StructDec* s) {
-    // Reutiliza la misma lógica que en GenCodeVisitor::visit(StructDec)
-    // para llenar structTable.
+   
     StructInfo info;
     int idx = 0;
     auto itType = s->body->types.begin();
@@ -84,24 +75,19 @@ int TypeChecker::visit(StructDec* s) {
     return 0;
 }
 
-// ===================== ImplDec (solo Add) =====================
+// ===================== ImplDec (Add) =====================
 
 int TypeChecker::visit(ImplDec* impl) {
-    if (impl->traitName != "Add") return 0;  // solo soportamos Add
+    if (impl->traitName != "Add") return 0;  
 
-    // key para T + U
     std::string key = impl->typeName + "#" + impl->paramType;
 
-    // nombre de función que usará gencode
     std::string fname = "__op_add_" + impl->typeName + "_" + impl->paramType;
 
     g_addImplName[key]   = fname;
     g_addResultType[key] = impl->returnType;
 
-    // Chequear el cuerpo del método como si fuera una función:
-    // fn __op_add_T_U(self: T, other: U) -> R { body }
 
-    // Guardar entorno anterior
     auto oldVarTypes = varTypes;
     std::string oldRet = currentFunctionReturnType;
     std::string oldName = currentFunctionName;
@@ -110,14 +96,11 @@ int TypeChecker::visit(ImplDec* impl) {
     currentFunctionName       = fname;
     varTypes.clear();
 
-    // params
     varTypes["self"]  = impl->typeName;
     varTypes[impl->paramName] = impl->paramType;
 
-    // chequear cuerpo
     impl->body->accept(this);
 
-    // restaurar
     varTypes = oldVarTypes;
     currentFunctionReturnType = oldRet;
     currentFunctionName = oldName;
@@ -136,12 +119,10 @@ int TypeChecker::visit(FunDec* f) {
     currentFunctionName       = f->nombre;
     varTypes.clear();
 
-    // parámetros
     for (size_t i = 0; i < f->Pnombres.size(); ++i) {
         varTypes[f->Pnombres[i]] = f->Ptipos[i];
     }
 
-    // variables locales (LetStm dentro de Body)
     f->cuerpo->accept(this);
 
     varTypes = oldVarTypes;
@@ -153,11 +134,9 @@ int TypeChecker::visit(FunDec* f) {
 // ===================== Body =====================
 
 int TypeChecker::visit(Body* b) {
-    // primero let (ya los separaste)
     for (auto let : b->vars) {
         let->accept(this);
     }
-    // luego statements
     for (auto s : b->StmList) {
         s->accept(this);
     }
@@ -167,10 +146,9 @@ int TypeChecker::visit(Body* b) {
 // ===================== LetStm =====================
 
 int TypeChecker::visit(LetStm* s) {
-    std::string t = s->type;    // tipo declarado: "Punto", "i64", "[i64;3]", etc.
+    std::string t = s->type;    
     std::string et = typeOf(s->e);
 
-    // Comprobación simple: tipos iguales
     if (t != et) {
         throw std::runtime_error(
             "Tipo incompatible en let " + s->id +
@@ -260,10 +238,10 @@ int TypeChecker::visit(FieldAccessExp* e) {
     return 0;
 }
 
-// --------- ArrayLitExp (muy simple) ---------
+// --------- ArrayLitExp ---------
 int TypeChecker::visit(ArrayLitExp* e) {
     if (e->elems.empty()) {
-        e->ty = "[i64;0]"; // simplificado
+        e->ty = "[i64;0]"; 
         return 0;
     }
     std::string elemType = typeOf(e->elems[0]);
@@ -277,15 +255,14 @@ int TypeChecker::visit(ArrayLitExp* e) {
     return 0;
 }
 
-// --------- FcallExp (simplificado: solo tipo retorno) ---------
+// --------- FcallExp ---------
 int TypeChecker::visit(FcallExp* e) {
     auto it = funcReturnTypes.find(e->nombre);
     if (it == funcReturnTypes.end()) {
         throw std::runtime_error("Llamada a función no declarada: " + e->nombre);
     }
-    // Podrías chequear args vs params, pero para mini-typechecker lo omitimos.
     for (auto arg : e->argumentos) {
-        typeOf(arg);  // forzar chequeo de tipos internos
+        typeOf(arg);  
     }
     e->ty = it->second;
     return 0;
@@ -302,13 +279,11 @@ int TypeChecker::visit(BinaryExp* e) {
 
     switch (e->op) {
         case PLUS_OP: {
-            // Caso built-in: i64 + i64 -> i64
             if (lt == "i64" && rt == "i64") {
                 e->ty = "i64";
                 return 0;
             }
 
-            // Caso sobrecarga: miramos en tabla de impl
             std::string key = lt + "#" + rt;
             auto itName = g_addImplName.find(key);
             auto itRes  = g_addResultType.find(key);
@@ -329,12 +304,11 @@ int TypeChecker::visit(BinaryExp* e) {
         case DIV_OP:
         case POW_OP:
         case LT_OP:
-            // Por simplicidad, requerimos i64 para todo esto
             if (lt != "i64" || rt != "i64") {
                 throw std::runtime_error("Operador aritmético/relacional requiere i64");
             }
             if (e->op == LT_OP) {
-                e->ty = "i64"; // bool como i64 (0 o 1)
+                e->ty = "i64"; 
             } else {
                 e->ty = "i64";
             }
@@ -348,13 +322,11 @@ int TypeChecker::visit(BinaryExp* e) {
 // ====== Stmts extra ======
 
 int TypeChecker::visit(PrintStm* stm) {
-    // Solo chequea que la expresión sea válida
     typeOf(stm->e);
     return 0;
 }
 
 int TypeChecker::visit(WhileStm* stm) {
-    // condición debe ser i64 (tu "bool")
     std::string ct = typeOf(stm->condition);
     if (ct != "i64") {
         throw std::runtime_error("Condición de while debe ser i64 (bool)");
@@ -374,22 +346,17 @@ int TypeChecker::visit(IfStm* stm) {
 }
 
 int TypeChecker::visit(VarDec* vd) {
-    // Si tienes VarDec (declaración múltiple), puedes simplemente ignorarlo
-    // o, si se usa de verdad, registrar tipos aquí.
+    
     return 0;
 }
 
 int TypeChecker::visit(GlobalVar* gv) {
-    // Si quieres typer globals, podrías hacer:
-    // globalVarTypes[gv->var] = gv->type;
-    // typeOf(gv->val);
-    // De momento, stub:
+
     typeOf(gv->val);
     return 0;
 }
 
 int TypeChecker::visit(FcallStm* s) {
-    // llamar al visit del FcallExp interno
     s->call->accept(this);
     return 0;
 }
@@ -397,8 +364,7 @@ int TypeChecker::visit(FcallStm* s) {
 // ====== Exps extra ======
 
 int TypeChecker::visit(StructLitExp* e) {
-    // Literal de struct: su tipo es el nombre del struct
-    // y chequeamos los campos (super simple)
+
     for (auto &f : e->fields) {
         typeOf(f.second);
     }
@@ -407,12 +373,10 @@ int TypeChecker::visit(StructLitExp* e) {
 }
 
 int TypeChecker::visit(StructField* f) {
-    // No necesitas hacer nada aquí normalmente
     return 0;
 }
 
 int TypeChecker::visit(IndexExp* e) {
-    // tipo del array/base
     std::string baseType = typeOf(e->array);
     std::string idxType  = typeOf(e->index);
 
@@ -425,7 +389,6 @@ int TypeChecker::visit(IndexExp* e) {
     if (isArrayType(baseType)) {
         parseArrayType(baseType, elemType, len);
     } else {
-        // si no es array, podrías lanzar error
         throw std::runtime_error("Indexación sobre tipo no-array: " + baseType);
     }
 

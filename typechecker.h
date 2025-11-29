@@ -4,24 +4,17 @@
 #include <unordered_map>
 #include <string>
 
-extern std::unordered_map<std::string, std::string> g_addImplName;   // key "T#U" -> "__op_add_T_U"
-extern std::unordered_map<std::string, std::string> g_addResultType; // key "T#U" -> "Resultado";
+extern std::unordered_map<std::string, std::string> g_addImplName;   
+extern std::unordered_map<std::string, std::string> g_addResultType; 
 
 
-// helpers si no los tienes en header
 bool isArrayType(const std::string& t);
 void parseArrayType(const std::string& t, std::string& elemType, int& length);
 
 struct TypeChecker : public Visitor {
-    // Entorno de variables: nombre -> tipo
     std::unordered_map<std::string, std::string> varTypes;
 
-    // Signaturas de funciones: nombre -> tipo retorno
     std::unordered_map<std::string, std::string> funcReturnTypes;
-
-    // Structs: ya los usas en gencode; los llenaremos aquí también
-    // (si ya estaban como extern, puedes reutilizarlos)
-    // extern std::unordered_map<std::string, StructInfo> structTable;
 
     std::string currentFunctionReturnType;
     std::string currentFunctionName;
@@ -30,7 +23,6 @@ struct TypeChecker : public Visitor {
 
     void checkProgram(Program* p);
 
-    // Visitors
     int visit(Program* p) override;
     int visit(StructDec* s) override;
     int visit(ImplDec* impl) override;

@@ -11,7 +11,6 @@ using std::vector;
 
 // ----------------- Helpers sobre Exp* -----------------
 
-// Recolecta nombres de variables usadas en una expresión
 static void collectVars(Exp* e, unordered_set<string>& vars) {
     if (!e) return;
 
@@ -28,11 +27,9 @@ static void collectVars(Exp* e, unordered_set<string>& vars) {
         collectVars(bin->right, vars);
         return;
     }
-    // Para otros tipos (arrays, structs, calls...) no hacemos nada especial
 }
 
-// Devuelve una clave canónica para la expresión si es "simple".
-// Si ve algo raro (StructLit, ArrayLit, Fcall, etc.), ok = false.
+
 static string exprKey(Exp* e, bool& ok) {
     if (!e) { ok = false; return ""; }
 
@@ -64,8 +61,7 @@ static string exprKey(Exp* e, bool& ok) {
 
 // ----------------- Helpers sobre Stm* -----------------
 
-// ¿Esta sentencia puede escribir alguna variable de 'vars'?
-// Si no sabemos, devolvemos true (barrera conservadora).
+
 static bool stmtWritesVar(Stm* s, const unordered_set<string>& vars) {
     if (auto let = dynamic_cast<LetStm*>(s)) {
         return vars.count(let->id) > 0;
@@ -74,18 +70,14 @@ static bool stmtWritesVar(Stm* s, const unordered_set<string>& vars) {
         if (auto idLhs = dynamic_cast<IdExp*>(asg->lhs)) {
             return vars.count(idLhs->value) > 0;
         }
-        // LHS complejo: por seguridad, barrera
         return true;
     }
 
-    // If, While, Print, Return, llamadas, etc. = barrera
     return true;
 }
 
-// ----------------- CSE local tipo "DAG" en un bloque -----------------
 
 static void optimizeBlock(std::list<Stm*>& stmtsList) {
-    // Copiamos la lista a un vector para usar índices
     std::vector<Stm*> stmts(stmtsList.begin(), stmtsList.end());
     const int n = (int)stmts.size();
 
@@ -114,14 +106,13 @@ static void optimizeBlock(std::list<Stm*>& stmtsList) {
 
         bool okKey = false;
         string key = exprKey(rhs, okKey);
-        if (!okKey) continue;   // expr complicada: no la tocamos
+        if (!okKey) continue;   
 
         unordered_set<string> usedVars;
         collectVars(rhs, usedVars);
 
         string replacementVar;
 
-        // buscamos hacia atrás una sentencia que calcule la misma expr
         for (int j = i - 1; j >= 0; --j) {
             Stm* prev = stmts[j];
 
@@ -136,11 +127,9 @@ static void optimizeBlock(std::list<Stm*>& stmtsList) {
                     prevLhs = idLhs2->value;
                     prevRhs = asg2->e;
                 } else {
-                    // LHS complejo: barrera
                     break;
                 }
             } else {
-                // If, While, Print, Return, etc. = barrera
                 break;
             }
 
@@ -150,7 +139,6 @@ static void optimizeBlock(std::list<Stm*>& stmtsList) {
                 continue;
             }
 
-            // chequeamos que entre j+1 y i-1 nadie pisa las vars usadas
             bool safe = true;
             for (int k = j + 1; k < i; ++k) {
                 if (stmtWritesVar(stmts[k], usedVars)) {
@@ -179,7 +167,6 @@ void DAGOptimizer::optimize(Program* p) {
 }
 
 int DAGOptimizer::visit(Program* p) {
-    // Solo optimizamos funciones
     for (auto f : p->fdlist) {
         f->accept(this);
     }
@@ -197,21 +184,17 @@ int DAGOptimizer::visit(FunDec* f) {
 int DAGOptimizer::visit(Body* b) {
     if (!b) return 0;
 
-    // 1) Construimos una lista "lineal" con:
-    //    primero las vars (let), luego las stm normales
+
     std::list<Stm*> all;
     for (auto decl : b->vars) {
-        // vars probablemente es list<LetStm*>; LetStm* se convierte a Stm*
         all.push_back(decl);
     }
     for (auto s : b->StmList) {
         all.push_back(s);
     }
 
-    // 2) optimización local sobre TODO el bloque (vars + stm)
     optimizeBlock(all);
 
-    // 3) desciende a bloques internos de if/while (que están en StmList)
     for (auto s : b->StmList) {
         if (auto ifs = dynamic_cast<IfStm*>(s)) {
             if (ifs->then) ifs->then->accept(this);
@@ -225,7 +208,6 @@ int DAGOptimizer::visit(Body* b) {
 }
 
 
-// ---- No-op overrides para cumplir con Visitor ----
 
 int DAGOptimizer::visit(VarDec* stm)      { return 0; }
 int DAGOptimizer::visit(NumberExp* exp)   { return 0; }

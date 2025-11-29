@@ -2,7 +2,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
-#include <cctype>   // para isspace
+#include <cctype>   
 
 // helpers 
 static std::string trim(const std::string& s) {
@@ -15,12 +15,10 @@ static std::string trim(const std::string& s) {
 static bool isAddZeroAnyReg(const std::string& line) {
     std::string t = trim(line);
     const std::string prefix = "addq $0, %";
-    // matchea cosas tipo: addq $0, %rax  /  addq $0, %rcx
     return t.rfind(prefix, 0) == 0;
 }
 
 
-// --- detectar patrón movq OFFSET(%rbp), %rax ---
 static bool parseMovMemRbpToRax(const std::string& line, std::string& mem) {
     std::string t = trim(line); // movq -8(%rbp), %rax
     const std::string prefix = "movq ";
@@ -58,13 +56,11 @@ static std::string joinLines(const std::vector<std::string>& lines) {
     return oss.str();
 }
 
-// regla: coincide con "movq %rax, %rax" ignorando espacios extra
 static bool isMovRaxToRax(const std::string& line) {
     std::string t = trim(line);
     return t == "movq %rax, %rax";
 }
 
-// reglas push/pop %rax
 static bool isPushRax(const std::string& line) {
     std::string t = trim(line);
     return t == "pushq %rax";
@@ -75,17 +71,14 @@ static bool isPopRax(const std::string& line) {
     return t == "popq %rax";
 }
 
-// --- detectar patrón movq $IMM, %rax ---
 static bool parseMovImmToRax(const std::string& line, std::string& imm) {
     std::string t = trim(line);
-    // esperamos algo como: movq $1, %rax
     const std::string prefix = "movq $";
-    if (t.rfind(prefix, 0) != 0) return false;  // no empieza con "movq $"
+    if (t.rfind(prefix, 0) != 0) return false;  
 
     size_t comma = t.find(',', prefix.size());
     if (comma == std::string::npos) return false;
 
-    // entre "$" y "," está el inmediato
     imm = t.substr(prefix.size(), comma - prefix.size());
 
     std::string rhs = trim(t.substr(comma + 1));
@@ -94,15 +87,12 @@ static bool parseMovImmToRax(const std::string& line, std::string& imm) {
     return true;
 }
 
-// ---  detectar patrón movq %rax, OFFSET(%rbp) ---
 static bool parseMovRaxToMemRbp(const std::string& line, std::string& mem) {
     std::string t = trim(line);
-    // esperamos algo como: movq %rax, -8(%rbp)
     const std::string prefix = "movq %rax,";
     if (t.rfind(prefix, 0) != 0) return false;
 
     std::string rhs = trim(t.substr(prefix.size()));
-    // rhs debería ser algo tipo "-8(%rbp)"
     if (rhs.empty()) return false;
     if (rhs.find("(%rbp)") == std::string::npos) return false;
 
@@ -120,49 +110,40 @@ std::string PeepholeOptimizer::optimize(const std::string& asmText) {
         std::string t = trim(line);
 
         // --- REGLA 1 ---
-        // movq $IMM, %rax
-        // movq %rax, OFFSET(%rbp)
-        //  ==> movq $IMM, OFFSET(%rbp)
         if (i + 1 < in.size()) {
             std::string imm, mem;
             if (parseMovImmToRax(line, imm) &&
                 parseMovRaxToMemRbp(in[i + 1], mem)) {
 
                 out.push_back(" movq $" + imm + ", " + mem);
-                i++;  // saltamos la siguiente línea porque ya la consumimos
+                i++;  
                 continue;
             }
         }
 
         // --- REGLA 2 ---
-        // movq OFFSET(%rbp), %rax
-        // pushq %rax
-        //  ==> pushq OFFSET(%rbp)
         if (i + 1 < in.size()) {
             std::string mem;
             if (parseMovMemRbpToRax(line, mem) &&   // movq offset(%rbp), %rax
                 isPushRax(in[i + 1])) {             // pushq %rax
 
                 out.push_back(" pushq " + mem);
-                i++;  // consumimos también el pushq %rax
+                i++;  
                 continue;
             }
         }
 
-        // 1) eliminar "movq %rax, %rax"
         if (isMovRaxToRax(line)) {
-            continue; // no lo copiamos a 'out'
+            continue; 
         }
 
-        // 1.5) eliminar addq $0, %rax
         if (isAddZeroAnyReg(line)) {
-            continue; // no hace nada, la eliminamos
+            continue; 
         }
 
-        // 2) eliminar patrón pushq %rax ; popq %rax (consecutivos)
         if (isPushRax(line) && i + 1 < in.size() && isPopRax(in[i+1])) {
-            i++;      // saltamos también la siguiente línea
-            continue; // no agregamos ninguna de las dos
+            i++;      
+            continue; 
         }
 
         // gg

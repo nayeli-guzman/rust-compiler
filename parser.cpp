@@ -348,6 +348,8 @@ string Parser::parseLValueName() {
     return name;
 }
 
+// profe un dota
+
 Stm* Parser::parseStm() {
     Stm* a;
     Exp* e;
@@ -357,20 +359,17 @@ Stm* Parser::parseStm() {
             cout << "Es una SSAS" << endl;
 
     if (check(Token::ID)) {
-        // Parsear algo que empieza por ID: puede ser LValue o llamada
             cout << "Es una etré" << endl;
 
-        Exp* e0 = parseF();   // Primary + FSuffix (., [ ])
+        Exp* e0 = parseF();   
             cout << "Es una asignación2" << endl;
 
-        // ¿Es asignación?  LValue "=" CE
         if (match(Token::ASSIGN)) {
             cout << "Es una asignación" << endl;
             Exp* rhs = parseCE();
             return new AssignStm(e0, rhs);
         }
 
-        // No hubo "=", si esto es una llamada a función, lo tomamos como statement
         if (auto call = dynamic_cast<FcallExp*>(e0)) {
             return new FcallStm(call);
         }
@@ -574,7 +573,6 @@ Exp* Parser::parsePrimary() {
             s->nombre = nom;
 
             if (!check(Token::RBRACK)) { // si no viene directamente '}'
-                // FieldInit ::= Identifier ":" CE
                 match(Token::ID);
                 string fieldName = previous->text;
                 match(Token::COLON);

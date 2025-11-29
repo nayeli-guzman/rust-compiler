@@ -7,17 +7,13 @@
 
 class DAGOptimizer : public Visitor {
 public:
-    // Punto de entrada
     void optimize(Program* p);
 
-    // --- Override de TODOS los visit puros del Visitor ---
 
-    // los que sí usamos de verdad:
     int visit(Program* p) override;
     int visit(FunDec* f) override;
     int visit(Body* b) override;
 
-    // el resto, no-op (solo para que la clase no sea abstracta)
     int visit(VarDec* stm) override;
     int visit(NumberExp* exp) override;
     int visit(GlobalVar* exp) override;
