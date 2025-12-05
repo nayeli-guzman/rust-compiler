@@ -4,10 +4,44 @@ import json
 import pandas as pd
 
 st.set_page_config(
-    page_title="Rust-like → x86-64 Simulador",
+    page_title="Rust Compiler",
     layout="wide",
     page_icon="🦀"
 )
+
+# ======== ESTILO PERSONALIZADO: FONDO CON IMAGEN ========
+page_bg_img = """
+<style>
+[data-testid="stAppViewContainer"] {
+    background-image: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQW8lE_r0ga9_rj2V5Z4pXmwxhNQxCjOvsJbw&s");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+[data-testid="stHeader"] {
+    background: rgba(0,0,0,0);
+}
+
+[data-testid="stSidebar"] {
+    background-color: rgba(30, 30, 30, 0.7);
+}
+</style>
+"""
+
+st.markdown(page_bg_img, unsafe_allow_html=True)
+
+panel_style = """
+<style>
+.block-container {
+    background: rgba(0,0,0,0.55);
+    border-radius: 12px;
+    padding: 20px;
+}
+</style>
+"""
+st.markdown(panel_style, unsafe_allow_html=True)
+
 
 # -----------------------
 # Función: convertir registros hex → decimal
@@ -28,12 +62,12 @@ def format_reg_hex_to_dec(regs):
 # -----------------------
 
 st.markdown("""
-# 🔧 Rust-like → x86-64 Simulador Paso a Paso
-Ingresa tu código en el lenguaje Rust-like usado por tu compilador.
+# 🔧 Rust Compiler
+Ingresar un input válido del proyecto en Rust.
 """)
 
 code_input = st.text_area(
-    "Tu código:",
+    "Código:",
     height=220,
     value="""fn main() {
     let x: i64 = 2;
@@ -42,7 +76,7 @@ code_input = st.text_area(
 }"""
 )
 
-if st.button("Compilar y Simular"):
+if st.button("Compilar"):
     with st.spinner("Compilando y ejecutando simulador…"):
         try:
             r = requests.post(
@@ -117,40 +151,38 @@ with col_sim:
     st.markdown("### 🟦 Instrucción actual")
     st.code(current["instruction"], language="asm")
 
-    # ------------------------
-    # Registros formateados
-    # ------------------------
-    st.markdown("### 🧠 Registros")
+    # ============================================================
+    # REGISTROS Y PILA LADO A LADO
+    # ============================================================
+    col_r, col_s = st.columns([1, 1])
 
-    regs_fmt = format_reg_hex_to_dec(current["registers"])
+    # --------- REGISTROS ---------
+    with col_r:
+        st.markdown("### 🧠 Registros")
 
-    regs_table = pd.DataFrame(
-        [
+        regs_fmt = [
             {
-                "Registro": r,
-                "Decimal": int(v, 16),
-                "Hex": v
+                "Registro": reg,
+                "Decimal": int(val, 16),
+                "Hex": val
             }
-            for r, v in current["registers"].items()
+            for reg, val in current["registers"].items()
         ]
-    )
 
-    st.table(regs_table)
+        st.table(regs_fmt)
 
-    # ------------------------
-    # Pila
-    # ------------------------
-    st.markdown("### 📦 Pila")
+    # --------- PILA ---------
+    with col_s:
+        st.markdown("### 📦 Pila")
 
-    stack_table = pd.DataFrame(
-        [
+        stack_fmt = [
             {
                 "Dirección": cell["address"],
                 "Valor (decimal)": int(cell["value"], 16)
             }
             for cell in current["stack"]
         ]
-    )
 
-    st.table(stack_table)
+        st.table(stack_fmt)
+
 
