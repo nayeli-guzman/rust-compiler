@@ -109,4 +109,12 @@ StringChar     ::= /* cualquier carácter excepto comillas dobles y salto de lí
                  | "\\" Escaped ;
 
 Escaped        ::= "\"" | "\\" | "n" | "t" ;
-
+```
+Cómo usar el frontend
+1. Usar linux
+2. sudo apt install python3-venv
+3. python3 -m venv venv
+4. source venv/bin/activate
+5. pip install -r requirements.txt
+6. python3 server.py
+7. streamlit run frontend.py
