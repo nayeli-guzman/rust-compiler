@@ -1,2 +1,19 @@
 a.out
 outputs/
+
+# Python
+__pycache__/
+*.pyc
+
+# Streamlit
+.streamlit/
+
+# Virtual env
+venv/
+.venv/
+
+# Temp
+tmp/
+*.s
+*.rs
+
